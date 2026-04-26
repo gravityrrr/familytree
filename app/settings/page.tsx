@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Button } from '@/components/ui/Button';
@@ -22,17 +22,15 @@ function SettingsContent() {
   const { showToast } = useToast();
   const [newPassword, setNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
-  const [showDates, setShowDates] = useState(true);
-  const [compactLayout, setCompactLayout] = useState(false);
-  const [showPhotos, setShowPhotos] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setShowDates(localStorage.getItem('tree-show-dates') !== 'false');
-      setCompactLayout(localStorage.getItem('tree-compact') === 'true');
-      setShowPhotos(localStorage.getItem('tree-show-photos') !== 'false');
-    }
-  }, []);
+  const [showDates, setShowDates] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('tree-show-dates') !== 'false' : true
+  );
+  const [compactLayout, setCompactLayout] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('tree-compact') === 'true' : false
+  );
+  const [showPhotos, setShowPhotos] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('tree-show-photos') !== 'false' : true
+  );
 
   const toggleSetting = (key: string, value: boolean, setter: (v: boolean) => void) => {
     setter(value);

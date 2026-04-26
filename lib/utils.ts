@@ -133,8 +133,6 @@ export function buildTreeLayout(
     return !parents || parents.length === 0;
   });
 
-  // Deduplicate: if a spouse of a root is also a root, keep only one
-  const rootSet = new Set(roots.map((r) => r.id));
   const processedRoots = new Set<string>();
 
   const NODE_WIDTH = 180;
@@ -240,12 +238,12 @@ export function flattenTree(nodes: TreeNode[]): TreeNode[] {
 // ============================================================
 
 /** Debounce a function */
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  fn: T,
+export function debounce<TArgs extends unknown[], TReturn>(
+  fn: (...args: TArgs) => TReturn,
   delay: number
-): (...args: Parameters<T>) => void {
+): (...args: TArgs) => void {
   let timer: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
+  return (...args: TArgs) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };

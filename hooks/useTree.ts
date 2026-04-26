@@ -51,11 +51,13 @@ export function useTree() {
   }, [activeTree]);
 
   useEffect(() => {
-    loadTrees();
+    const id = requestAnimationFrame(() => { loadTrees(); });
+    return () => cancelAnimationFrame(id);
   }, [loadTrees]);
 
   useEffect(() => {
-    loadTreeData();
+    const id = requestAnimationFrame(() => { loadTreeData(); });
+    return () => cancelAnimationFrame(id);
   }, [loadTreeData]);
 
   const refresh = useCallback(() => {

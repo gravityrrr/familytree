@@ -28,7 +28,10 @@ function NewPersonContent() {
   const [linkResults, setLinkResults] = useState<Person[]>([]);
 
   useEffect(() => {
-    if (!linkSearch || !activeTree) { setLinkResults([]); return; }
+    if (!linkSearch || !activeTree) {
+      const id = requestAnimationFrame(() => setLinkResults([]));
+      return () => cancelAnimationFrame(id);
+    }
     const timer = setTimeout(async () => {
       const results = await searchPersons(activeTree.id, linkSearch);
       setLinkResults(results);

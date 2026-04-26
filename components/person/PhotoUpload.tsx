@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Camera, Image, Link, X, Upload } from 'lucide-react';
+import { Camera, Image as ImageIcon, Link, X, Upload } from 'lucide-react';
 
 interface PhotoUploadProps {
   open: boolean;
@@ -52,7 +53,7 @@ export function PhotoUpload({ open, onClose, onUpload, onUrlUpload, currentPhoto
 
       {preview && (
         <div className="relative mb-4">
-          <img src={preview} alt="Preview" className="w-full h-48 object-cover rounded-card" />
+          <Image src={preview} alt="Preview" width={400} height={192} className="w-full h-48 object-cover rounded-card" unoptimized />
           <button onClick={() => { setPreview(null); setSelectedFile(null); }} className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center">
             <X className="w-4 h-4 text-white" />
           </button>
@@ -61,7 +62,7 @@ export function PhotoUpload({ open, onClose, onUpload, onUrlUpload, currentPhoto
 
       {!preview && currentPhotoUrl && (
         <div className="mb-4">
-          <img src={currentPhotoUrl} alt="Current" className="w-full h-48 object-cover rounded-card opacity-50" />
+          <Image src={currentPhotoUrl} alt="Current photo" width={400} height={192} className="w-full h-48 object-cover rounded-card opacity-50" unoptimized />
           <p className="text-xs text-center text-gray-400 mt-1">Current photo</p>
         </div>
       )}
@@ -73,7 +74,7 @@ export function PhotoUpload({ open, onClose, onUpload, onUrlUpload, currentPhoto
             <div><p className="text-sm font-medium text-gray-900">Take Photo</p><p className="text-xs text-gray-500">Open camera</p></div>
           </button>
           <button className="w-full flex items-center gap-3 p-3 rounded-card hover:bg-gray-50 transition-colors text-left" onClick={() => fileInputRef.current?.click()}>
-            <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center"><Image className="w-5 h-5 text-purple-600" /></div>
+            <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center"><ImageIcon className="w-5 h-5 text-purple-600" /></div>
             <div><p className="text-sm font-medium text-gray-900">Choose from Library</p><p className="text-xs text-gray-500">Select from device</p></div>
           </button>
           <button className="w-full flex items-center gap-3 p-3 rounded-card hover:bg-gray-50 transition-colors text-left" onClick={() => setShowUrlInput(true)}>

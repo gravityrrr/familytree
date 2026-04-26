@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { getInitials, getGenerationColor } from '@/lib/utils';
 
 interface AvatarProps {
@@ -33,7 +34,7 @@ export function Avatar({ firstName, lastName, photoUrl, size = 'md', generationL
 
   return (
     <div
-      className={`${sizes[size]} ${rings[size]} ring-offset-white rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`${sizes[size]} ${rings[size]} ring-offset-white rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg relative ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
         backgroundColor: photoUrl ? 'transparent' : colors.bg,
         color: colors.fg,
@@ -43,7 +44,7 @@ export function Avatar({ firstName, lastName, photoUrl, size = 'md', generationL
       onClick={onClick}
     >
       {photoUrl ? (
-        <img src={photoUrl} alt={`${firstName} ${lastName || ''}`} className="w-full h-full object-cover" />
+        <Image src={photoUrl} alt={`${firstName} ${lastName || ''}`} fill className="object-cover" unoptimized />
       ) : (
         <span className="select-none">{initials}</span>
       )}

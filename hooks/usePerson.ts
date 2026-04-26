@@ -34,7 +34,8 @@ export function usePerson(personId: string | null) {
   }, [personId]);
 
   useEffect(() => {
-    load();
+    const id = requestAnimationFrame(() => { load(); });
+    return () => cancelAnimationFrame(id);
   }, [load]);
 
   return { person, relationships, events, loading, error, refresh: load };
