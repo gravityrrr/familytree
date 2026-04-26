@@ -13,7 +13,7 @@ import { usePerson } from '@/hooks/usePerson';
 import { updatePerson } from '@/lib/db';
 import { uploadPhoto, uploadPhotoFromUrl } from '@/lib/storage';
 import { formatDate, calculateAge, relationshipLabel } from '@/lib/utils';
-import { Pencil, TreePine, User, FileEdit, StickyNote, Loader2, ArrowLeft } from 'lucide-react';
+import { Pencil, Network, User, FileEdit, StickyNote, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function PersonPage() {
   return <ProtectedRoute><ToastProvider><PersonPageContent /></ToastProvider></ProtectedRoute>;
@@ -121,19 +121,33 @@ function PersonPageContent() {
 
       <PhotoUpload open={photoSheetOpen} onClose={() => setPhotoSheetOpen(false)} onUpload={handlePhotoUpload} onUrlUpload={handleUrlUpload} currentPhotoUrl={person.photo_url} />
 
-      {/* Bottom nav */}
-      <nav className="bottom-nav flex items-center justify-around py-2 px-4 safe-bottom sticky bottom-0 z-30">
-        {[
-          { id: 'tree' as const, icon: TreePine, label: 'Tree', action: () => router.push('/tree') },
-          { id: 'profile' as const, icon: User, label: 'Profile', action: () => setActiveTab('profile') },
-          { id: 'edit' as const, icon: FileEdit, label: 'Edit', action: () => router.push(`/person/${person.id}/edit`) },
-          { id: 'notes' as const, icon: StickyNote, label: 'Notes', action: () => setActiveTab('notes') },
-        ].map(({ id, icon: Icon, label, action }) => (
-          <button key={id} className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-300 press ${activeTab === id ? 'text-brand-500 bg-brand-50/80' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`} onClick={action}>
-            <Icon className="w-5 h-5" /><span className="text-[10px] font-semibold">{label}</span>
-          </button>
-        ))}
-      </nav>
+      {/* Floating Bottom Navigation Dock */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 safe-bottom no-print">
+        <nav className="flex items-center justify-around p-1.5 rounded-full bg-[var(--surface)]/80 backdrop-blur-xl border border-[var(--border)] shadow-glass-lg shadow-brand-500/10">
+          {[
+            { id: 'tree' as const, icon: Network, label: 'Tree', action: () => router.push('/tree') },
+            { id: 'profile' as const, icon: User, label: 'Profile', action: () => setActiveTab('profile') },
+            { id: 'edit' as const, icon: FileEdit, label: 'Edit', action: () => router.push(`/person/${person.id}/edit`) },
+            { id: 'notes' as const, icon: StickyNote, label: 'Notes', action: () => setActiveTab('notes') },
+          ].map(({ id, icon: Icon, label, action }) => (
+            <button
+              key={id}
+              className={`relative flex flex-col items-center justify-center w-16 h-14 rounded-full transition-all duration-300 press ${
+                activeTab === id
+                  ? 'text-brand-500'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+              onClick={action}
+            >
+              {activeTab === id && (
+                <div className="absolute inset-0 bg-brand-50/80 dark:bg-brand-500/15 rounded-full -z-10 animate-scale-in" />
+              )}
+              <Icon className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold tracking-wide">{label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

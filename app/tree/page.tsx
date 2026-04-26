@@ -50,16 +50,18 @@ function TreePageContent() {
 
   return (
     <div className="min-h-screen-safe bg-mesh flex flex-col">
-      {/* Header */}
-      <header className="sticky-header px-4 sm:px-6 py-3 flex items-center justify-between safe-top">
-        <div className="flex items-center gap-3">
+      {/* Floating Header */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-4 sm:px-6 py-4 flex items-center justify-between safe-top bg-gradient-to-b from-[var(--bg)] via-[var(--bg)]/80 to-transparent pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
           <BrandLogo size={34} />
           <div>
             <h1 className="font-display text-[1.05rem] leading-tight tracking-tight text-[var(--text-primary)]">{activeTree?.name || 'KinRoot'}</h1>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">{persons.length} {persons.length === 1 ? 'member' : 'members'}</p>
           </div>
         </div>
-        <ThemeToggle compact />
+        <div className="pointer-events-auto">
+          <ThemeToggle compact />
+        </div>
       </header>
 
       {/* Main content */}
@@ -138,36 +140,51 @@ function TreePageContent() {
         )}
       </main>
 
-      {/* FAB */}
-      <button
-        className="fixed bottom-24 right-4 sm:right-6 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-400 text-white rounded-2xl fab flex items-center justify-center z-20 no-print"
-        onClick={() => router.push('/person/new')}
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* Floating FAB - Adjusted for dock */}
+      {activeTab === 'tree' && (
+        <button
+          className="absolute bottom-24 right-4 sm:right-6 w-12 h-12 bg-gradient-to-br from-brand-500 to-brand-400 text-white rounded-2xl fab flex items-center justify-center z-20 no-print"
+          onClick={() => router.push('/person/new')}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
+      {activeTab !== 'tree' && (
+        <button
+          className="fixed bottom-24 right-4 sm:right-6 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-400 text-white rounded-2xl fab flex items-center justify-center z-20 no-print"
+          onClick={() => router.push('/person/new')}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
 
-      {/* Bottom navigation */}
-      <nav className="bottom-nav flex items-center justify-around py-2 px-4 safe-bottom sticky bottom-0 z-30 no-print">
-        {[
-          { id: 'tree' as const, icon: Network, label: 'Tree' },
-          { id: 'people' as const, icon: Users, label: 'People' },
-          { id: 'search' as const, icon: Search, label: 'Search' },
-          { id: 'settings' as const, icon: Settings, label: 'Settings' },
-        ].map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-300 press ${
-              activeTab === id
-                ? 'text-brand-500 bg-brand-50/80 dark:bg-brand-900/20'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)]'
-            }`}
-            onClick={() => setActiveTab(id)}
-          >
-            <Icon className="w-5 h-5" />
-            <span className="text-[10px] font-semibold">{label}</span>
-          </button>
-        ))}
-      </nav>
+      {/* Floating Bottom Navigation Dock */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 safe-bottom no-print">
+        <nav className="flex items-center justify-around p-1.5 rounded-full bg-[var(--surface)]/80 backdrop-blur-xl border border-[var(--border)] shadow-glass-lg shadow-brand-500/10">
+          {[
+            { id: 'tree' as const, icon: Network, label: 'Tree' },
+            { id: 'people' as const, icon: Users, label: 'People' },
+            { id: 'search' as const, icon: Search, label: 'Search' },
+            { id: 'settings' as const, icon: Settings, label: 'Settings' },
+          ].map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              className={`relative flex flex-col items-center justify-center w-16 h-14 rounded-full transition-all duration-300 press ${
+                activeTab === id
+                  ? 'text-brand-500'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+              onClick={() => setActiveTab(id)}
+            >
+              {activeTab === id && (
+                <div className="absolute inset-0 bg-brand-50/80 dark:bg-brand-500/15 rounded-full -z-10 animate-scale-in" />
+              )}
+              <Icon className="w-5 h-5 mb-0.5" />
+              <span className="text-[9px] font-semibold tracking-wide">{label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

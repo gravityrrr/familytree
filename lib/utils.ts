@@ -96,32 +96,58 @@ export function buildTreeLayout(
   const personSpouses = new Map<string, string[]>();
 
   relationships.forEach((rel) => {
+    // rel.person_id is the subject (e.g., 'You')
+    // rel.related_person_id is the object (e.g., 'New Person')
+    // rel.relationship_type is what the object is to the subject.
+    // So if type is 'parent', related_person_id is the parent of person_id.
+
     if (rel.relationship_type === 'parent') {
-      // person_id is the parent of related_person_id
-      const children = parentToChildren.get(rel.person_id) || [];
-      children.push(rel.related_person_id);
-      parentToChildren.set(rel.person_id, children);
-
-      const parents = childToParents.get(rel.related_person_id) || [];
-      parents.push(rel.person_id);
-      childToParents.set(rel.related_person_id, parents);
-    } else if (rel.relationship_type === 'child') {
-      // person_id is a child of related_person_id
-      const parents = childToParents.get(rel.person_id) || [];
-      parents.push(rel.related_person_id);
-      childToParents.set(rel.person_id, parents);
-
       const children = parentToChildren.get(rel.related_person_id) || [];
-      children.push(rel.person_id);
+      if (!children.includes(rel.person_id)) children.push(rel.person_id);
       parentToChildren.set(rel.related_person_id, children);
+
+      const parents = childToParents.get(rel.person_id) || [];
+      if (!parents.includes(rel.related_person_id)) parents.push(rel.related_person_id);
+      childToParents.set(rel.person_id, parents);
+    } else if (rel.relationship_type === 'child') {
+      const parents = childToParents.get(rel.related_person_id) || [];
+      if (!parents.includes(rel.person_id)) parents.push(rel.person_id);
+      childToParents.set(rel.related_person_id, parents);
+
+      const children = parentToChildren.get(rel.person_id) || [];
+      if (!children.includes(rel.related_person_id)) children.push(rel.related_person_id);
+      parentToChildren.set(rel.person_id, children);
     } else if (rel.relationship_type === 'spouse') {
       const s1 = personSpouses.get(rel.person_id) || [];
-      s1.push(rel.related_person_id);
+      if (!s1.includes(rel.related_person_id)) s1.push(rel.related_person_id);
       personSpouses.set(rel.person_id, s1);
 
       const s2 = personSpouses.get(rel.related_person_id) || [];
-      s2.push(rel.person_id);
+      if (!s2.includes(rel.person_id)) s2.push(rel.person_id);
       personSpouses.set(rel.related_person_id, s2);
+    }
+  });
+
+  // Second pass: handle siblings. If A is a sibling of B, they share parents.
+  relationships.forEach((rel) => {
+    if (rel.relationship_type === 'sibling') {
+      const p1 = childToParents.get(rel.person_id) || [];
+      const p2 = childToParents.get(rel.related_person_id) || [];
+      
+      // Combine parents
+      const allParents = Array.from(new Set([...p1, ...p2]));
+      
+      if (allParents.length > 0) {
+        childToParents.set(rel.person_id, allParents);
+        childToParents.set(rel.related_person_id, allParents);
+        
+        allParents.forEach(pid => {
+          const children = parentToChildren.get(pid) || [];
+          if (!children.includes(rel.person_id)) children.push(rel.person_id);
+          if (!children.includes(rel.related_person_id)) children.push(rel.related_person_id);
+          parentToChildren.set(pid, Array.from(new Set(children)));
+        });
+      }
     }
   });
 

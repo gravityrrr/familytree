@@ -44,31 +44,58 @@ export function PersonNode({ person, x, y, generation, selected = false, onNodeD
   };
 
   return (
-    <foreignObject x={x} y={y} width={176} height={92}>
+    <foreignObject x={x} y={y - 16} width={180} height={110} style={{ overflow: 'visible' }}>
       <div
         data-tree-node="true"
-        className={`w-full h-full rounded-2xl shadow-card border flex items-center gap-3 px-3.5 cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5 press ${selected ? 'ring-2 ring-brand-400/60' : ''}`}
-        style={{
-          backgroundColor: `${colors.bg}ee`,
-          borderColor: selected ? `${colors.ring}80` : `${colors.ring}30`,
-          backdropFilter: 'blur(8px)',
-        }}
+        className="relative w-[176px] h-[92px] mt-4 ml-[2px] cursor-pointer transition-all duration-300 hover:scale-105 hover:-translate-y-1 hover:shadow-glass-lg press"
         onClick={handleClick}
       >
-        <Avatar firstName={person.first_name} lastName={person.last_name} photoUrl={person.photo_url} size="md" generationLevel={generation} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold truncate leading-tight" style={{ color: colors.fg }}>
-            {person.first_name}
-          </p>
-          <p className="text-[11px] truncate mt-0.5" style={{ color: colors.fg, opacity: 0.6 }}>
-            {person.last_name || ''}
-          </p>
-          {lifespan && (
-            <p className="text-[9px] mt-1 font-medium tracking-wide" style={{ color: colors.fg, opacity: 0.4 }}>
-              {lifespan}
-            </p>
-          )}
+        {/* Animated glowing border background */}
+        <div 
+          className={`absolute inset-0 rounded-2xl transition-opacity duration-300 ${selected ? 'animate-pulse-soft opacity-100' : 'opacity-80'}`}
+          style={{
+            background: `linear-gradient(135deg, ${colors.ring}60, ${colors.ring}20)`,
+            padding: '1.5px',
+          }}
+        >
+          {/* Main card background (no backdrop-filter to prevent SVG rendering bugs) */}
+          <div 
+            className="absolute inset-[1.5px] rounded-[14.5px] shadow-inner-glow flex flex-col items-center justify-end pb-3"
+            style={{
+              backgroundColor: colors.bg,
+            }}
+          >
+            <div className="text-center px-2 w-full mt-7">
+              <p className="font-display text-[14px] font-bold tracking-tight truncate" style={{ color: colors.fg }}>
+                {person.first_name} <span className="opacity-80 font-medium">{person.last_name || ''}</span>
+              </p>
+              {lifespan && (
+                <p className="font-sans text-[10px] uppercase tracking-wider mt-0.5" style={{ color: colors.fg, opacity: 0.6 }}>
+                  {lifespan}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Overlapping Avatar */}
+        <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10 drop-shadow-md transition-transform duration-300 hover:scale-110">
+          <Avatar 
+            firstName={person.first_name} 
+            lastName={person.last_name} 
+            photoUrl={person.photo_url} 
+            size="md" 
+            generationLevel={generation} 
+          />
+        </div>
+        
+        {/* Selection highlight */}
+        {selected && (
+          <div 
+            className="absolute -inset-1 rounded-3xl animate-pulse-soft -z-10 blur-md"
+            style={{ backgroundColor: `${colors.ring}40` }}
+          />
+        )}
       </div>
     </foreignObject>
   );
