@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 const BUCKET = 'avatars';
 
@@ -11,9 +11,9 @@ export async function uploadPhoto(personId: string, file: File): Promise<string>
   const filePath = `${personId}.${ext}`;
 
   // Remove existing file first (ignore errors if it doesn't exist)
-  await supabase.storage.from(BUCKET).remove([filePath]);
+  await getSupabase().storage.from(BUCKET).remove([filePath]);
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await getSupabase().storage
     .from(BUCKET)
     .upload(filePath, file, {
       cacheControl: '3600',
@@ -23,7 +23,7 @@ export async function uploadPhoto(personId: string, file: File): Promise<string>
 
   if (uploadError) throw uploadError;
 
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
+  const { data } = getSupabase().storage.from(BUCKET).getPublicUrl(filePath);
   return data.publicUrl;
 }
 
@@ -48,6 +48,6 @@ export async function deletePhoto(personId: string): Promise<void> {
   // Try common extensions
   const extensions = ['jpg', 'jpeg', 'png', 'webp'];
   const paths = extensions.map((ext) => `${personId}.${ext}`);
-  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  const { error } = await getSupabase().storage.from(BUCKET).remove(paths);
   if (error) throw error;
 }

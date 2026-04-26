@@ -9,7 +9,7 @@ import { ToastProvider, useToast } from '@/components/ui/Toast';
 import { Avatar } from '@/components/ui/Avatar';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { ArrowLeft, LogOut, Lock, Share2, Printer, Eye, LayoutGrid, Image, ChevronRight, Shield, Palette } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -41,7 +41,7 @@ function SettingsContent() {
     if (!newPassword) return;
     setChangingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { error } = await getSupabase().auth.updateUser({ password: newPassword });
       if (error) throw error;
       setNewPassword('');
       showToast('Password updated');
