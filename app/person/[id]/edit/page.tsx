@@ -13,13 +13,7 @@ import type { Person } from '@/types';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function EditPersonPage() {
-  return (
-    <ProtectedRoute>
-      <ToastProvider>
-        <EditPersonContent />
-      </ToastProvider>
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute><ToastProvider><EditPersonContent /></ToastProvider></ProtectedRoute>;
 }
 
 function EditPersonContent() {
@@ -31,11 +25,7 @@ function EditPersonContent() {
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
 
   if (loading || !person) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-brand animate-spin" />
-      </div>
-    );
+    return <div className="min-h-screen-safe flex items-center justify-center bg-mesh"><Loader2 className="w-8 h-8 text-brand-500 animate-spin" /></div>;
   }
 
   const handleSubmit = async (data: Partial<Person>) => {
@@ -53,45 +43,30 @@ function EditPersonContent() {
   const handlePhotoUpload = async (file: File) => {
     const url = await uploadPhoto(person.id, file);
     await updatePerson(person.id, { photo_url: url });
-    refresh();
-    showToast('Photo updated');
+    refresh(); showToast('Photo updated');
   };
 
   const handleUrlUpload = async (url: string) => {
     const publicUrl = await uploadPhotoFromUrl(person.id, url);
     await updatePerson(person.id, { photo_url: publicUrl });
-    refresh();
-    showToast('Photo updated');
+    refresh(); showToast('Photo updated');
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+    <div className="min-h-screen-safe bg-mesh">
+      <header className="sticky-header px-4 sm:px-6 py-3 flex items-center justify-between safe-top">
+        <button onClick={() => router.back()} className="p-2 hover:bg-[var(--surface-soft)] rounded-xl transition-colors press">
+          <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
         </button>
-        <h1 className="text-base font-semibold text-gray-900">Edit Person</h1>
-        <div className="w-7" />
+        <h1 className="text-sm font-bold text-[var(--text-primary)]">Edit Person</h1>
+        <div className="w-9" />
       </header>
 
-      <div className="max-w-lg mx-auto px-6 py-4">
-        <PersonForm
-          initialData={person}
-          onSubmit={handleSubmit}
-          onDelete={handleDelete}
-          isEdit
-          onPhotoUpload={() => setPhotoSheetOpen(true)}
-        />
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-4 animate-fade-in-up">
+        <PersonForm initialData={person} onSubmit={handleSubmit} onDelete={handleDelete} isEdit onPhotoUpload={() => setPhotoSheetOpen(true)} />
       </div>
 
-      <PhotoUpload
-        open={photoSheetOpen}
-        onClose={() => setPhotoSheetOpen(false)}
-        onUpload={handlePhotoUpload}
-        onUrlUpload={handleUrlUpload}
-        currentPhotoUrl={person.photo_url}
-      />
+      <PhotoUpload open={photoSheetOpen} onClose={() => setPhotoSheetOpen(false)} onUpload={handlePhotoUpload} onUrlUpload={handleUrlUpload} currentPhotoUrl={person.photo_url} />
     </div>
   );
 }

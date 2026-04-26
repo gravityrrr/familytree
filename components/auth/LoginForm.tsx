@@ -6,12 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { getUserTrees } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { TreePine, Mail, Lock } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Mail, Lock } from 'lucide-react';
 
-/**
- * Login form with email/password authentication.
- * Redirects to /tree on success, or /onboarding if no tree exists.
- */
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -25,24 +23,11 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        setError(authError.message);
-        return;
-      }
-
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) { setError(authError.message); return; }
       if (data.user) {
-        // Check if user has any trees
         const trees = await getUserTrees(data.user.id);
-        if (trees.length === 0) {
-          router.push('/onboarding');
-        } else {
-          router.push('/tree');
-        }
+        router.push(trees.length === 0 ? '/onboarding' : '/tree');
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');
@@ -52,65 +37,62 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-brand/10 rounded-2xl mb-4">
-            <TreePine className="w-8 h-8 text-brand" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Family Tree</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Sign in to your family tree
-          </p>
+    <div className="min-h-screen-safe bg-mesh px-4 py-8 sm:py-12">
+      <div className="mx-auto w-full max-w-[430px] animate-fade-in-up">
+        <div className="mb-6 flex items-center justify-end">
+          <ThemeToggle compact />
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-card text-sm text-red-700">
-              {error}
+        <div className="card rounded-sheet p-6 sm:p-8">
+          <div className="mb-7 text-center">
+            <BrandLogo size={48} withLabel />
+            <p className="mt-3 text-sm text-[var(--text-muted)]">Sign in to explore your family atlas</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="px-4 py-3 bg-red-50/80 border border-red-100 rounded-xl text-sm text-red-700 animate-fade-in flex items-center gap-2 dark:bg-red-950/30 dark:border-red-800/50 dark:text-red-300">
+                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-red-500 text-xs">!</span>
+                </div>
+                {error}
+              </div>
+            )}
+
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-200 pointer-events-none" />
+              <Input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="pl-11"
+                id="login-email"
+              />
             </div>
-          )}
 
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="pl-10"
-              id="login-email"
-            />
-          </div>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors duration-200 pointer-events-none" />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="pl-11"
+                id="login-password"
+              />
+            </div>
 
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="pl-10"
-              id="login-password"
-            />
-          </div>
+            <Button type="submit" loading={loading} className="w-full" size="lg">
+              Sign In
+            </Button>
+          </form>
+        </div>
 
-          <Button
-            type="submit"
-            loading={loading}
-            className="w-full"
-            size="lg"
-          >
-            Sign In
-          </Button>
-        </form>
-
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Accounts are invite-only. Contact your family admin for access.
+        <p className="text-center text-[11px] text-[var(--text-muted)] mt-6 tracking-wide">
+          Accounts are invite-only · Contact your family admin for access
         </p>
       </div>
     </div>

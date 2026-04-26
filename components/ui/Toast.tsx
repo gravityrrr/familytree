@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext, useContext, useCallback } from 'react';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface ToastProps {
@@ -10,86 +10,51 @@ interface ToastProps {
   duration?: number;
 }
 
-export function Toast({
-  message,
-  type = 'success',
-  onClose,
-  duration = 3000,
-}: ToastProps) {
-  const [visible, setVisible] = useState(true);
+export function Toast({ message, type = 'success', onClose, duration = 3000 }: ToastProps) {
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Animate in
+    requestAnimationFrame(() => setVisible(true));
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onClose, 300); // Wait for exit animation
+      setTimeout(onClose, 300);
     }, duration);
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const icon =
-    type === 'success' ? (
-      <CheckCircle className="w-5 h-5 text-green-500" />
-    ) : (
-      <AlertCircle className="w-5 h-5 text-red-500" />
-    );
-
   return (
-    <div
-      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-card shadow-lg transition-all duration-300 ${
-        visible
-          ? 'opacity-100 translate-y-0'
-          : 'opacity-0 translate-y-2'
-      }`}
-    >
-      {icon}
+    <div className={`fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-5 py-3.5 glass-strong rounded-2xl shadow-glass-lg transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-95'}`}>
+      {type === 'success' ? (
+        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+        </div>
+      ) : (
+        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+          <AlertCircle className="w-4 h-4 text-red-600" />
+        </div>
+      )}
       <p className="text-sm font-medium text-gray-800">{message}</p>
-      <button
-        onClick={() => {
-          setVisible(false);
-          setTimeout(onClose, 300);
-        }}
-        className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
-      >
-        <X className="w-4 h-4 text-gray-400" />
+      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="p-1 hover:bg-gray-100 rounded-full transition-colors ml-1">
+        <X className="w-3.5 h-3.5 text-gray-400" />
       </button>
     </div>
   );
 }
 
-// ============================================================
-// Toast Context for global toast management
-// ============================================================
+// Toast context
+interface ToastItem { id: string; message: string; type: 'success' | 'error'; }
+interface ToastContextType { showToast: (message: string, type?: 'success' | 'error') => void; }
+const ToastContext = createContext<ToastContextType>({ showToast: () => {} });
 
-import { createContext, useContext, useCallback } from 'react';
-
-interface ToastItem {
-  id: string;
-  message: string;
-  type: 'success' | 'error';
-}
-
-interface ToastContextType {
-  showToast: (message: string, type?: 'success' | 'error') => void;
-}
-
-const ToastContext = createContext<ToastContextType>({
-  showToast: () => {},
-});
-
-export function useToast() {
-  return useContext(ToastContext);
-}
+export function useToast() { return useContext(ToastContext); }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback(
-    (message: string, type: 'success' | 'error' = 'success') => {
-      const id = Date.now().toString();
-      setToasts((prev) => [...prev, { id, message, type }]);
-    },
-    []
-  );
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToasts((prev) => [...prev, { id: Date.now().toString(), message, type }]);
+  }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -98,13 +63,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-        />
+      {toasts.map((t) => (
+        <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
       ))}
     </ToastContext.Provider>
   );

@@ -4,7 +4,7 @@ import React from 'react';
 import type { Person } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { getLifespan } from '@/lib/utils';
-import { MapPin, Calendar } from 'lucide-react';
+import { MapPin, Calendar, Camera } from 'lucide-react';
 
 interface PersonCardProps {
   person: Person;
@@ -12,93 +12,61 @@ interface PersonCardProps {
   onAvatarClick?: () => void;
 }
 
-/**
- * Hero section for the person profile page.
- * Shows large avatar, name, dates, and relationship tags.
- */
-export function PersonCard({
-  person,
-  relationshipTags = [],
-  onAvatarClick,
-}: PersonCardProps) {
+export function PersonCard({ person, relationshipTags = [], onAvatarClick }: PersonCardProps) {
   const lifespan = getLifespan(person);
 
   return (
-    <div className="flex flex-col items-center text-center pt-8 pb-6 px-6">
-      {/* Large avatar with tap-to-upload */}
-      <div className="relative mb-4">
-        <Avatar
-          firstName={person.first_name}
-          lastName={person.last_name}
-          photoUrl={person.photo_url}
-          size="xl"
-          generationLevel={3}
-          onClick={onAvatarClick}
-        />
-        {onAvatarClick && (
-          <div className="absolute bottom-0 right-0 w-7 h-7 bg-brand rounded-full flex items-center justify-center shadow-sm border-2 border-white cursor-pointer">
-            <svg
-              className="w-3.5 h-3.5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+    <div className="relative overflow-hidden">
+      {/* Gradient header background */}
+      <div className="absolute inset-0 h-36 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-pink-500/5" />
+      <div className="absolute top-0 left-0 right-0 h-36 bg-[radial-gradient(circle_at_30%_-20%,rgba(24,95,165,0.12),transparent_60%)]" />
+
+      <div className="relative flex flex-col items-center text-center pt-10 pb-6 px-6 animate-fade-in-up">
+        {/* Avatar */}
+        <div className="relative mb-5 group">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-400 to-purple-400 blur-md opacity-20 group-hover:opacity-30 transition-opacity scale-110" />
+          <Avatar firstName={person.first_name} lastName={person.last_name} photoUrl={person.photo_url} size="xl" generationLevel={3} onClick={onAvatarClick} />
+          {onAvatarClick && (
+            <button onClick={onAvatarClick} className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-400 rounded-full flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-110 press">
+              <Camera className="w-3.5 h-3.5 text-white" />
+            </button>
+          )}
+        </div>
+
+        {/* Name */}
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          {person.first_name} {person.last_name || ''}
+        </h1>
+
+        {person.nickname && (
+          <p className="text-sm text-gray-400 mt-0.5 italic">&ldquo;{person.nickname}&rdquo;</p>
+        )}
+
+        {/* Meta info */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-3">
+          {lifespan && (
+            <span className="flex items-center gap-1.5 text-[13px] text-gray-500 bg-gray-100/60 px-3 py-1 rounded-full">
+              <Calendar className="w-3.5 h-3.5" />{lifespan}
+            </span>
+          )}
+          {person.birth_place && (
+            <span className="flex items-center gap-1.5 text-[13px] text-gray-500 bg-gray-100/60 px-3 py-1 rounded-full">
+              <MapPin className="w-3.5 h-3.5" />{person.birth_place}
+            </span>
+          )}
+        </div>
+
+        {/* Tags */}
+        {relationshipTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4 justify-center">
+            {relationshipTags.map((tag) => (
+              <span key={tag} className="chip bg-brand-50 text-brand-600 border border-brand-100/50">
+                {tag}
+              </span>
+            ))}
           </div>
         )}
       </div>
-
-      {/* Name */}
-      <h1 className="text-2xl font-bold text-gray-900">
-        {person.first_name} {person.last_name || ''}
-      </h1>
-
-      {person.nickname && (
-        <p className="text-sm text-gray-500 mt-0.5">
-          &ldquo;{person.nickname}&rdquo;
-        </p>
-      )}
-
-      {/* Lifespan */}
-      {lifespan && (
-        <div className="flex items-center gap-1.5 mt-2 text-sm text-gray-500">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>{lifespan}</span>
-        </div>
-      )}
-
-      {/* Birthplace */}
-      {person.birth_place && (
-        <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
-          <MapPin className="w-3.5 h-3.5" />
-          <span>{person.birth_place}</span>
-        </div>
-      )}
-
-      {/* Relationship tags */}
-      {relationshipTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4 justify-center">
-          {relationshipTags.map((tag) => (
-            <span
-              key={tag}
-              className="px-3 py-1 bg-brand/10 text-brand text-xs font-medium rounded-full"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

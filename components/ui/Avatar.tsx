@@ -13,39 +13,27 @@ interface AvatarProps {
   onClick?: () => void;
 }
 
-/**
- * Avatar component that shows a photo or coloured initials.
- * Ring colour is determined by generation level.
- */
-export function Avatar({
-  firstName,
-  lastName,
-  photoUrl,
-  size = 'md',
-  generationLevel = 3,
-  className = '',
-  onClick,
-}: AvatarProps) {
+export function Avatar({ firstName, lastName, photoUrl, size = 'md', generationLevel = 3, className = '', onClick }: AvatarProps) {
   const initials = getInitials(firstName, lastName);
   const colors = getGenerationColor(generationLevel);
 
   const sizes = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-10 h-10 text-sm',
-    lg: 'w-14 h-14 text-base',
-    xl: 'w-20 h-20 text-xl',
+    sm: 'w-9 h-9 text-[11px]',
+    md: 'w-11 h-11 text-sm',
+    lg: 'w-16 h-16 text-lg',
+    xl: 'w-24 h-24 text-2xl',
   };
 
-  const ringWidths = {
-    sm: 'ring-2',
-    md: 'ring-2',
-    lg: 'ring-[3px]',
-    xl: 'ring-[3px]',
+  const rings = {
+    sm: 'ring-[2px] ring-offset-[1.5px]',
+    md: 'ring-[2.5px] ring-offset-[1.5px]',
+    lg: 'ring-[3px] ring-offset-2',
+    xl: 'ring-[3.5px] ring-offset-2',
   };
 
   return (
     <div
-      className={`${sizes[size]} rounded-full ${ringWidths[size]} flex-shrink-0 overflow-hidden flex items-center justify-center font-semibold cursor-pointer transition-transform hover:scale-105 ${className}`}
+      className={`${sizes[size]} ${rings[size]} ring-offset-white rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
         backgroundColor: photoUrl ? 'transparent' : colors.bg,
         color: colors.fg,
@@ -55,13 +43,9 @@ export function Avatar({
       onClick={onClick}
     >
       {photoUrl ? (
-        <img
-          src={photoUrl}
-          alt={`${firstName} ${lastName || ''}`}
-          className="w-full h-full object-cover"
-        />
+        <img src={photoUrl} alt={`${firstName} ${lastName || ''}`} className="w-full h-full object-cover" />
       ) : (
-        <span>{initials}</span>
+        <span className="select-none">{initials}</span>
       )}
     </div>
   );

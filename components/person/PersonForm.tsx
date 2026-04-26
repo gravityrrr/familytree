@@ -184,7 +184,7 @@ export function PersonForm({
 
       {/* Birth section */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">
           Birth
         </h3>
         <Input
@@ -215,7 +215,7 @@ export function PersonForm({
       {/* Death section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wide">
             Death
           </h3>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -223,9 +223,9 @@ export function PersonForm({
               type="checkbox"
               checked={isLiving}
               onChange={(e) => setIsLiving(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand"
+              className="w-4 h-4 rounded border-[var(--border)] text-brand focus:ring-brand"
             />
-            <span className="text-sm text-gray-600">Still living</span>
+            <span className="text-sm text-[var(--text-muted)]">Still living</span>
           </label>
         </div>
         {!isLiving && (
@@ -247,7 +247,7 @@ export function PersonForm({
           </>
         )}
         {isLiving && (
-          <p className="text-xs text-gray-400 italic">
+          <p className="text-xs text-[var(--text-muted)] italic">
             Leave blank if this person is still living
           </p>
         )}
@@ -270,7 +270,7 @@ export function PersonForm({
 
       {/* Delete button (edit mode only) */}
       {isEdit && onDelete && (
-        <div className="pt-4 border-t border-gray-100">
+        <div className="pt-4 border-t border-[var(--border)]">
           {showDeleteConfirm ? (
             <div className="space-y-3">
               <p className="text-sm text-red-600 text-center">

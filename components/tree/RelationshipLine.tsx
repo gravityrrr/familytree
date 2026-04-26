@@ -3,53 +3,41 @@
 import React from 'react';
 
 interface RelationshipLineProps {
-  /** Start point */
-  x1: number;
-  y1: number;
-  /** End point */
-  x2: number;
-  y2: number;
-  /** Type of connection */
+  x1: number; y1: number;
+  x2: number; y2: number;
   type: 'parent-child' | 'spouse';
 }
 
-/**
- * SVG line connecting two person nodes.
- * Parent-child lines are solid vertical; spouse lines are dashed horizontal.
- */
-export function RelationshipLine({
-  x1,
-  y1,
-  x2,
-  y2,
-  type,
-}: RelationshipLineProps) {
+export function RelationshipLine({ x1, y1, x2, y2, type }: RelationshipLineProps) {
   if (type === 'spouse') {
-    // Horizontal dashed line for spouse connections
     return (
-      <line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke="#94a3b8"
-        strokeWidth={1.5}
-        strokeDasharray="6,4"
-        className="transition-all duration-300"
+      <line x1={x1} y1={y1} x2={x2} y2={y2}
+        stroke="url(#spouseGradient)" strokeWidth={1.5} strokeDasharray="6,4" opacity={0.6}
       />
     );
   }
 
-  // Vertical line with elbow for parent-child connections
   const midY = (y1 + y2) / 2;
-
   return (
     <path
-      d={`M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`}
-      fill="none"
-      stroke="#cbd5e1"
-      strokeWidth={1.5}
-      className="transition-all duration-300"
+      d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
+      fill="none" stroke="url(#parentGradient)" strokeWidth={1.5} opacity={0.5}
     />
+  );
+}
+
+/** SVG gradient definitions — render once inside the SVG */
+export function LineGradientDefs() {
+  return (
+    <defs>
+      <linearGradient id="parentGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#94a3b8" />
+        <stop offset="100%" stopColor="#cbd5e1" />
+      </linearGradient>
+      <linearGradient id="spouseGradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="#d4537e" stopOpacity={0.5} />
+        <stop offset="100%" stopColor="#7f77dd" stopOpacity={0.5} />
+      </linearGradient>
+    </defs>
   );
 }

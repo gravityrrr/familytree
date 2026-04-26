@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Fraunces, Manrope } from 'next/font/google';
+import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' });
 
 export const metadata: Metadata = {
   title: 'Family Tree',
@@ -11,8 +13,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="font-sans min-h-screen bg-white">{children}</body>
+    <html lang="en" className={`${manrope.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <body className="font-sans min-h-screen-safe bg-[var(--bg)] text-[var(--text-primary)]">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
