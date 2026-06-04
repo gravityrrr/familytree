@@ -26,17 +26,17 @@ export function Toast({ message, type = 'success', onClose, duration = 3000 }: T
   return (
     <div className={`fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-5 py-3.5 glass-strong rounded-2xl shadow-glass-lg transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-95'}`}>
       {type === 'success' ? (
-        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-          <CheckCircle className="w-4 h-4 text-green-600" />
+        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+          <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
         </div>
       ) : (
-        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-          <AlertCircle className="w-4 h-4 text-red-600" />
+        <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+          <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
         </div>
       )}
-      <p className="text-sm font-medium text-gray-800">{message}</p>
-      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="p-1 hover:bg-gray-100 rounded-full transition-colors ml-1">
-        <X className="w-3.5 h-3.5 text-gray-400" />
+      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{message}</p>
+      <button onClick={() => { setVisible(false); setTimeout(onClose, 300); }} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors ml-1">
+        <X className="w-3.5 h-3.5 text-gray-400 dark:text-gray-300" />
       </button>
     </div>
   );

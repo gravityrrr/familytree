@@ -86,7 +86,8 @@ export function getGenerationColor(level: number): GenerationColor {
  */
 export function buildTreeLayout(
   persons: Person[],
-  relationships: Relationship[]
+  relationships: Relationship[],
+  selfPersonId?: string | null
 ): TreeNode[] {
   if (persons.length === 0) return [];
 
@@ -209,7 +210,13 @@ export function buildTreeLayout(
       x = (leftmost + rightmost) / 2;
     } else {
       x = currentX;
-      currentX += NODE_WIDTH + H_GAP + spouses.length * (NODE_WIDTH + SPOUSE_GAP);
+    }
+
+    // Always ensure currentX is pushed past this node and its spouses
+    // so subsequent unconnected persons or roots don't overlap with the spouses
+    const rightEdge = x + NODE_WIDTH + spouses.length * (NODE_WIDTH + SPOUSE_GAP);
+    if (rightEdge + H_GAP > currentX) {
+      currentX = rightEdge + H_GAP;
     }
 
     const y = generation * (NODE_HEIGHT + V_GAP);

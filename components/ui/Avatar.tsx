@@ -25,21 +25,20 @@ export function Avatar({ firstName, lastName, photoUrl, size = 'md', generationL
     xl: 'w-24 h-24 text-2xl',
   };
 
-  const rings = {
-    sm: 'ring-[2px] ring-offset-[1.5px]',
-    md: 'ring-[2.5px] ring-offset-[1.5px]',
-    lg: 'ring-[3px] ring-offset-2',
-    xl: 'ring-[3.5px] ring-offset-2',
+  const borders = {
+    sm: 'border-[2px]',
+    md: 'border-[2.5px]',
+    lg: 'border-[3px]',
+    xl: 'border-[3.5px]',
   };
 
   return (
     <div
-      className={`${sizes[size]} ${rings[size]} ring-offset-white rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg relative ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`${sizes[size]} ${borders[size]} border-white dark:border-gray-900 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold relative ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{
         backgroundColor: photoUrl ? 'transparent' : colors.bg,
         color: colors.fg,
-        // @ts-expect-error CSS custom property for ring colour
-        '--tw-ring-color': colors.ring,
+        borderColor: colors.ring,
       }}
       onClick={onClick}
     >

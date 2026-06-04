@@ -6,12 +6,14 @@ type Theme = 'light' | 'dark';
 
 interface ThemeContextValue {
   theme: Theme;
+  mounted: boolean;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: 'light',
+  mounted: false,
   toggleTheme: () => {},
   setTheme: () => {},
 });
@@ -24,16 +26,23 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light';
+  // Always start with 'light' for SSR to avoid hydration mismatch
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [mounted, setMounted] = useState(false);
+
+  // After mount, read the real preference
+  useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return stored ?? (systemPrefersDark ? 'dark' : 'light');
-  });
+    const resolved = stored ?? (systemPrefersDark ? 'dark' : 'light');
+    setThemeState(resolved);
+    applyTheme(resolved);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    if (mounted) applyTheme(theme);
+  }, [theme, mounted]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
     setThemeState(nextTheme);
@@ -45,7 +54,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(theme === 'light' ? 'dark' : 'light');
   }, [theme, setTheme]);
 
-  const value = useMemo(() => ({ theme, toggleTheme, setTheme }), [theme, toggleTheme, setTheme]);
+  const value = useMemo(() => ({ theme, mounted, toggleTheme, setTheme }), [theme, mounted, toggleTheme, setTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

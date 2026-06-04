@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -10,18 +11,24 @@ import { Avatar } from '@/components/ui/Avatar';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { getSupabase } from '@/lib/supabase';
-import { ArrowLeft, LogOut, Lock, Share2, Printer, Eye, LayoutGrid, Image, ChevronRight, Shield, Palette } from 'lucide-react';
+import type { Profile } from '@/types';
+import { ArrowLeft, LogOut, Lock, Share2, Printer, Eye, LayoutGrid, Image, ChevronRight, Palette } from 'lucide-react';
 
 export default function SettingsPage() {
-  return <ProtectedRoute><ToastProvider><SettingsContent /></ToastProvider></ProtectedRoute>;
+  return <SettingsContent />;
 }
 
 function SettingsContent() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const { showToast } = useToast();
   const [newPassword, setNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+
+
+
   const [showDates, setShowDates] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('tree-show-dates') !== 'false' : true
   );
@@ -31,6 +38,32 @@ function SettingsContent() {
   const [showPhotos, setShowPhotos] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('tree-show-photos') !== 'false' : true
   );
+
+
+
+
+
+  const handleSendInvite = async () => {
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      const response = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send invite');
+      }
+      showToast(`Invitation sent to ${inviteEmail}`);
+      setInviteEmail('');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to send invite', 'error');
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const toggleSetting = (key: string, value: boolean, setter: (v: boolean) => void) => {
     setter(value);
@@ -53,11 +86,11 @@ function SettingsContent() {
   };
 
   return (
-    <div className="min-h-screen-safe bg-mesh">
+    <div className="flex-1 w-full bg-mesh overflow-y-auto pb-24">
       <header className="sticky-header px-4 sm:px-6 py-3 flex items-center gap-3 safe-top">
-        <button onClick={() => router.back()} className="p-2 rounded-xl transition-colors press hover:bg-[var(--surface-soft)]">
+        <Link href="/tree" className="p-2 rounded-xl transition-colors press hover:bg-[var(--surface-soft)]">
           <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
-        </button>
+        </Link>
         <h1 className="text-base font-bold text-[var(--text-primary)]">Settings</h1>
       </header>
 
@@ -68,10 +101,45 @@ function SettingsContent() {
             <Avatar firstName={user?.email?.charAt(0) || '?'} lastName="" size="lg" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{user?.email}</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Signed in</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5 uppercase font-bold tracking-wider text-brand-500 dark:text-brand-400">
+                {role}
+              </p>
             </div>
           </div>
         </section>
+
+        {role === 'admin' && (
+          <section className="card rounded-xl p-5 space-y-4">
+            <div>
+              <h2 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
+                <Share2 className="w-3.5 h-3.5 text-brand-500" /> Invite Family Member
+              </h2>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">
+                Send an email invitation. They can join this shared tree after setting their password.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@example.com"
+                id="settings-invite-email"
+                className="flex-1"
+              />
+              <Button
+                onClick={handleSendInvite}
+                loading={inviting}
+                disabled={!inviteEmail}
+                size="sm"
+              >
+                Send Invite
+              </Button>
+            </div>
+          </section>
+        )}
+
+
 
         <section className="card rounded-xl p-5">
           <h2 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -82,7 +150,7 @@ function SettingsContent() {
 
         <section className="card rounded-xl p-5">
           <h2 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Shield className="w-3.5 h-3.5" /> Security
+            <Lock className="w-3.5 h-3.5" /> Security
           </h2>
           <div className="space-y-3">
             <Input type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" id="settings-password" />

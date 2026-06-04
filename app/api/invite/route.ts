@@ -1,6 +1,5 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerSupabase } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 /**
@@ -10,50 +9,65 @@ import { NextResponse } from 'next/server';
  */
 export async function POST(request: Request) {
   try {
-    // Verify the requesting user is authenticated
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set() {},
-          remove() {},
-        },
-      }
-    );
-
+    // 1. Verify the requesting user is authenticated
+    const supabase = await createServerSupabase();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // 2. Fetch the user profile to check roles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    const isAdmin = session.user.email === 'rushil.reddy4726@gmail.com' || profile?.role === 'admin';
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Only administrators can send invites' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Get target email from request
     const { email } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Use service role key to invite user
+    // 4. Verify service role key is set
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) {
+      console.error('Invite Error: SUPABASE_SERVICE_ROLE_KEY environment variable is not defined.');
+      return NextResponse.json(
+        { error: 'Server configuration error: Service role key is missing.' },
+        { status: 500 }
+      );
+    }
+
+    // 5. Use service role key to invite user
     const serviceSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      serviceKey
     );
 
     const { data, error } = await serviceSupabase.auth.admin.inviteUserByEmail(email);
 
     if (error) {
+      console.error('Supabase Invite Admin Error:', error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, user: data.user });
-  } catch {
+  } catch (error) {
+    console.error('Invite API Catch-All Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

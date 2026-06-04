@@ -8,7 +8,7 @@ import { useAuth } from './useAuth';
 /**
  * Hook to load the user's trees, persons, and relationships.
  */
-export function useTree() {
+export function useTree(treeId?: string | null) {
   const { user } = useAuth();
   const [trees, setTrees] = useState<Tree[]>([]);
   const [activeTree, setActiveTree] = useState<Tree | null>(null);
@@ -24,14 +24,19 @@ export function useTree() {
       const userTrees = await getUserTrees(user.id);
       setTrees(userTrees);
       if (userTrees.length > 0) {
-        setActiveTree(userTrees[0]);
+        if (treeId) {
+          const found = userTrees.find(t => t.id === treeId);
+          setActiveTree(found || userTrees[0]);
+        } else {
+          setActiveTree(userTrees[0]);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load trees');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, treeId]);
 
   const loadTreeData = useCallback(async () => {
     if (!activeTree) return;
