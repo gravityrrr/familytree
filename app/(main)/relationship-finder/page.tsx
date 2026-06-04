@@ -195,7 +195,7 @@ function RelationshipFinderContent() {
                   
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 mb-8 mt-2">
                     <div className="flex flex-col items-center gap-3 text-center">
-                      <Avatar url={getPersonA()?.photo_url} fallback={getPersonA()?.first_name || ''} size={80} className="ring-4 ring-slate-50 dark:ring-slate-950 shadow-md" />
+                      <Avatar photoUrl={getPersonA()?.photo_url} firstName={getPersonA()?.first_name || '?'} size="xl" className="ring-4 ring-slate-50 dark:ring-slate-950 shadow-md" />
                       <div>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{getPersonA()?.first_name}</span>
                         <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mt-1">Person 1</p>
@@ -209,7 +209,7 @@ function RelationshipFinderContent() {
                     </div>
 
                     <div className="flex flex-col items-center gap-3 text-center">
-                      <Avatar url={getPersonB()?.photo_url} fallback={getPersonB()?.first_name || ''} size={80} className="ring-4 ring-slate-50 dark:ring-slate-950 shadow-md" />
+                      <Avatar photoUrl={getPersonB()?.photo_url} firstName={getPersonB()?.first_name || '?'} size="xl" className="ring-4 ring-slate-50 dark:ring-slate-950 shadow-md" />
                       <div>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{getPersonB()?.first_name}</span>
                         <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mt-1">Person 2</p>
@@ -272,7 +272,7 @@ function RelationshipFinderContent() {
                     {/* Start Node */}
                     <div className="relative flex items-center gap-4 py-2">
                       <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center z-10 shadow-sm">
-                        <Avatar url={getPersonA()?.photo_url} fallback={getPersonA()?.first_name || ''} size={24} />
+                        <Avatar photoUrl={getPersonA()?.photo_url} firstName={getPersonA()?.first_name || '?'} size="sm" />
                       </div>
                       <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{getPersonA()?.first_name} {getPersonA()?.last_name}</span>
                     </div>

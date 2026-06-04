@@ -566,8 +566,8 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
           if ((e.target as Element).closest('[data-tree-node="true"]')) return;
           centerOnSelf();
         }}
-        onMouseLeave={() => {
-          handleMouseUp();
+        onMouseLeave={(e) => {
+          handleMouseUp(e);
           setCursorVisible(false);
         }}
         onWheel={handleWheel}

@@ -422,15 +422,15 @@ export async function getPendingRequestsForOwner(): Promise<any[]> {
   if (!data || data.length === 0) return [];
 
   // Fetch user profiles separately since join_requests references auth.users not profiles directly
-  const userIds = data.map(r => r.user_id);
+  const userIds = data.map((r: any) => r.user_id);
   const { data: profiles } = await getSupabase()
     .from('profiles')
     .select('id, email, first_name, last_name, avatar_url')
     .in('id', userIds);
 
-  return data.map(req => ({
+  return data.map((req: any) => ({
     ...req,
-    user: profiles?.find(p => p.id === req.user_id) || { id: req.user_id, first_name: 'Unknown', email: '' }
+    user: profiles?.find((p: any) => p.id === req.user_id) || { id: req.user_id, first_name: 'Unknown', email: '' }
   }));
 }
 
