@@ -199,7 +199,7 @@ function DashboardContent() {
         <div className="flex items-center gap-3">
           <BrandLogo size={36} />
           <div>
-            <h1 className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">KinRoot</h1>
+            <h1 className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">VamshaVrksha</h1>
             <p className="text-[10px] uppercase tracking-widest font-bold text-blue-600 dark:text-blue-400 mt-0.5">{role}</p>
           </div>
         </div>
@@ -307,7 +307,7 @@ function DashboardContent() {
                   <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 text-brand-500 rounded-2xl flex items-center justify-center mb-6">
                     <TreeDeciduous className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Welcome to KinRoot!</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Welcome to VamshaVrksha!</h3>
                   <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8">
                     You don't have access to any family trees yet. Here is how you can get started:
                   </p>

@@ -21,7 +21,7 @@ export function TreeHeader() {
           <LayoutDashboard className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="font-display text-[0.95rem] leading-tight font-extrabold tracking-tight text-slate-900 dark:text-slate-100">{activeTree?.name || 'KinRoot'}</h1>
+          <h1 className="font-display text-[0.95rem] leading-tight font-extrabold tracking-tight text-slate-900 dark:text-slate-100">{activeTree?.name || 'VamshaVrksha'}</h1>
           <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{persons.length} {persons.length === 1 ? 'member' : 'members'}</p>
         </div>
       </div>

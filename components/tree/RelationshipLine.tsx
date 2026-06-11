@@ -17,10 +17,8 @@ export function RelationshipLine({ x1, y1, x2, y2, type }: RelationshipLineProps
         strokeDasharray="6,8" 
         strokeLinecap="round"
         opacity={0.8}
-      >
-        {/* Native SVG animation for cross-browser support */}
-        <animate attributeName="stroke-dashoffset" values="100;0" dur="5s" repeatCount="indefinite" />
-      </line>
+        className="tree-line-animate"
+      />
     );
   }
 
@@ -38,7 +36,7 @@ export function RelationshipLine({ x1, y1, x2, y2, type }: RelationshipLineProps
         strokeWidth={3} 
         opacity={0.2}
       />
-      {/* Flowing data line */}
+      {/* Flowing data line — uses CSS animation instead of SVG <animate> for better iOS performance */}
       <path
         d={path}
         fill="none" 
@@ -47,9 +45,8 @@ export function RelationshipLine({ x1, y1, x2, y2, type }: RelationshipLineProps
         strokeDasharray="8,12"
         strokeLinecap="round"
         opacity={0.9}
-      >
-        <animate attributeName="stroke-dashoffset" values="100;0" dur="4s" repeatCount="indefinite" />
-      </path>
+        className="tree-line-animate"
+      />
     </g>
   );
 }
@@ -57,4 +54,3 @@ export function RelationshipLine({ x1, y1, x2, y2, type }: RelationshipLineProps
 export function LineGradientDefs() {
   return null;
 }
-

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ToastProvider } from '@/components/ui/Toast';
 import { Users, Search, Settings, Map, Network } from 'lucide-react';
+import { InstallPrompt } from '@/components/ui/InstallPrompt';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -62,6 +63,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               })}
             </nav>
           </div>
+
+          {/* PWA Install Prompt */}
+          <InstallPrompt />
         </div>
       </ToastProvider>
     </ProtectedRoute>

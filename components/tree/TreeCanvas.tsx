@@ -61,6 +61,23 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const lastMoveRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const animationRef = useRef<number | null>(null);
 
+  // Refs for touch state (avoid stale closures in native event listeners)
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const initialPinchDistRef = useRef<number | null>(null);
+  const initialPinchZoomRef = useRef<number | null>(null);
+
+  // Keep refs in sync
+  useEffect(() => { panRef.current = pan; }, [pan]);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+
+  // Detect if device has touch support (for hiding custom cursor on mobile)
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
   const treeNodes = buildTreeLayout(persons, relationships, selfPersonId ?? undefined);
   const flatNodes = flattenTree(treeNodes);
 
@@ -353,7 +370,7 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     lastMoveRef.current = { x: e.clientX, y: e.clientY, t: now };
 
     setPan(clampPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }, zoom));
-  }, [clampPan, dragging, dragStart, zoom]);
+  }, [clampPan, dragging, dragStart, zoom, linkDrag, pan]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (linkDrag) {
@@ -410,52 +427,119 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     });
   }, [clampPan, stopAnimation]);
 
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [initialPinchDist, setInitialPinchDist] = useState<number | null>(null);
-  const [initialPinchZoom, setInitialPinchZoom] = useState<number | null>(null);
+  // ── Native touch handlers (non-passive, so preventDefault works on iOS WebKit) ──
+  const clampPanRef = useRef(clampPan);
+  useEffect(() => { clampPanRef.current = clampPan; }, [clampPan]);
 
-  const getPinchDistance = (touches: React.TouchList) => {
-    return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-  };
+  const stopAnimationRef = useRef(stopAnimation);
+  useEffect(() => { stopAnimationRef.current = stopAnimation; }, [stopAnimation]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    stopAnimation();
-    if (e.touches.length === 1) {
-      const t = e.touches[0];
-      setTouchStart({ x: t.clientX - pan.x, y: t.clientY - pan.y });
-    } else if (e.touches.length === 2) {
-      setInitialPinchDist(getPinchDistance(e.touches));
-      setInitialPinchZoom(zoom);
-    }
-  }, [pan, stopAnimation, zoom]);
+  const startInertiaRef = useRef(startInertia);
+  useEffect(() => { startInertiaRef.current = startInertia; }, [startInertia]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 1 && touchStart) {
-      const t = e.touches[0];
-      setPan(clampPan({ x: t.clientX - touchStart.x, y: t.clientY - touchStart.y }, zoom));
-    } else if (e.touches.length === 2 && initialPinchDist && initialPinchZoom && svgRef.current) {
-      const dist = getPinchDistance(e.touches);
-      const center = {
-        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
-      };
-      const rect = svgRef.current.getBoundingClientRect();
-      const localCenterX = center.x - rect.left;
-      const localCenterY = center.y - rect.top;
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
 
-      const scale = dist / initialPinchDist;
-      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, initialPinchZoom * scale));
-      
-      setZoom((z) => {
-        setPan((prev) => {
-          const newX = localCenterX - (localCenterX - prev.x) * (nextZoom / z);
-          const newY = localCenterY - (localCenterY - prev.y) * (nextZoom / z);
-          return clampPan({ x: newX, y: newY }, nextZoom);
+    const getPinchDistance = (touches: TouchList) => {
+      return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      // Always prevent default to stop iOS scroll/bounce/rubber-banding
+      e.preventDefault();
+      stopAnimationRef.current();
+
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchStartRef.current = { x: t.clientX - panRef.current.x, y: t.clientY - panRef.current.y };
+        lastMoveRef.current = { x: t.clientX, y: t.clientY, t: performance.now() };
+        velocityRef.current = { x: 0, y: 0 };
+      } else if (e.touches.length === 2) {
+        initialPinchDistRef.current = getPinchDistance(e.touches);
+        initialPinchZoomRef.current = zoomRef.current;
+        touchStartRef.current = null; // cancel single-finger pan during pinch
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+
+      if (e.touches.length === 1 && touchStartRef.current) {
+        const t = e.touches[0];
+        const now = performance.now();
+        const prev = lastMoveRef.current;
+        if (prev) {
+          const dt = Math.max(8, now - prev.t);
+          velocityRef.current = {
+            x: (t.clientX - prev.x) / dt,
+            y: (t.clientY - prev.y) / dt,
+          };
+        }
+        lastMoveRef.current = { x: t.clientX, y: t.clientY, t: now };
+
+        const nextPan = clampPanRef.current(
+          { x: t.clientX - touchStartRef.current.x, y: t.clientY - touchStartRef.current.y },
+          zoomRef.current
+        );
+        setPan(nextPan);
+      } else if (e.touches.length === 2 && initialPinchDistRef.current && initialPinchZoomRef.current) {
+        const dist = getPinchDistance(e.touches);
+        const center = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+        const rect = svg.getBoundingClientRect();
+        const localCenterX = center.x - rect.left;
+        const localCenterY = center.y - rect.top;
+
+        const scale = dist / initialPinchDistRef.current;
+        const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, initialPinchZoomRef.current * scale));
+
+        setZoom((z) => {
+          setPan((prev) => {
+            const newX = localCenterX - (localCenterX - prev.x) * (nextZoom / z);
+            const newY = localCenterY - (localCenterY - prev.y) * (nextZoom / z);
+            return clampPanRef.current({ x: newX, y: newY }, nextZoom);
+          });
+          return nextZoom;
         });
-        return nextZoom;
-      });
-    }
-  }, [clampPan, touchStart, zoom, initialPinchDist, initialPinchZoom]);
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        // All fingers lifted — apply inertia if velocity is sufficient
+        const velocity = Math.hypot(velocityRef.current.x, velocityRef.current.y);
+        if (velocity > 0.08) {
+          startInertiaRef.current();
+        }
+        touchStartRef.current = null;
+        initialPinchDistRef.current = null;
+        initialPinchZoomRef.current = null;
+        lastMoveRef.current = null;
+      } else if (e.touches.length === 1) {
+        // Went from pinch to single finger — reset single-finger pan origin
+        const t = e.touches[0];
+        touchStartRef.current = { x: t.clientX - panRef.current.x, y: t.clientY - panRef.current.y };
+        initialPinchDistRef.current = null;
+        initialPinchZoomRef.current = null;
+        lastMoveRef.current = { x: t.clientX, y: t.clientY, t: performance.now() };
+        velocityRef.current = { x: 0, y: 0 };
+      }
+    };
+
+    // Attach with { passive: false } — critical for iOS WebKit preventDefault() to work
+    svg.addEventListener('touchstart', onTouchStart, { passive: false });
+    svg.addEventListener('touchmove', onTouchMove, { passive: false });
+    svg.addEventListener('touchend', onTouchEnd, { passive: false });
+
+    return () => {
+      svg.removeEventListener('touchstart', onTouchStart);
+      svg.removeEventListener('touchmove', onTouchMove);
+      svg.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []); // Empty deps — uses refs for all mutable state
 
   const handleZoomChange = useCallback((newZoom: number) => {
     if (!svgRef.current) return;
@@ -557,8 +641,16 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden select-none">
-      <svg ref={svgRef} className="absolute inset-0 w-full h-full cursor-crosshair" style={{ touchAction: 'none' }}
-        onMouseEnter={() => setCursorVisible(true)}
+      <svg
+        ref={svgRef}
+        className="absolute inset-0 w-full h-full cursor-crosshair"
+        style={{
+          touchAction: 'none',
+          WebkitUserSelect: 'none',
+          userSelect: 'none',
+          WebkitTouchCallout: 'none',
+        }}
+        onMouseEnter={() => { if (!isTouchDevice) setCursorVisible(true); }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -571,13 +663,13 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
           setCursorVisible(false);
         }}
         onWheel={handleWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={() => setTouchStart(null)}
       >
         <LineGradientDefs />
         <rect width="100%" height="100%" fill="transparent" />
-        <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
+        <g
+          transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
+          style={{ willChange: 'transform' }}
+        >
           {lines}
           {sortedNodes.map((n) => (
             <PersonNode
@@ -649,7 +741,8 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
         </>
       )}
 
-      {cursorVisible && (
+      {/* Custom cursor — desktop only */}
+      {cursorVisible && !isTouchDevice && (
         <div
           className="pointer-events-none absolute z-20 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-500/70 bg-brand-400/10"
           style={{ left: cursorPos.x, top: cursorPos.y }}

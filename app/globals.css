@@ -38,6 +38,9 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent pull-to-refresh on mobile browsers */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -48,6 +51,9 @@
       var(--bg);
     color: var(--text-primary);
     min-height: 100dvh;
+    /* Prevent iOS bounce/rubber-banding on the body itself */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   *:focus-visible {
@@ -77,17 +83,30 @@
   }
 
   .glass {
-    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    /* Fallback for older iOS that doesn't support color-mix */
+    background: rgba(255, 255, 255, 0.84);
     border: 1px solid var(--border);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
+  }
+  @supports (background: color-mix(in srgb, red 50%, blue)) {
+    .glass {
+      background: color-mix(in srgb, var(--surface) 84%, transparent);
+    }
   }
 
   .glass-strong {
-    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    background: rgba(255, 255, 255, 0.90);
     border: 1px solid var(--border);
     backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     box-shadow: var(--shadow-card);
+  }
+  @supports (background: color-mix(in srgb, red 50%, blue)) {
+    .glass-strong {
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+    }
   }
 
   .safe-top {
@@ -98,9 +117,15 @@
   }
 
   .skeleton {
-    background: linear-gradient(90deg, var(--surface-soft) 25%, color-mix(in srgb, var(--surface-soft) 82%, #fff) 50%, var(--surface-soft) 75%);
+    background: linear-gradient(90deg, var(--surface-soft) 25%, rgba(255,255,255,0.12) 50%, var(--surface-soft) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+  }
+  @supports (background: color-mix(in srgb, red 50%, blue)) {
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface-soft) 25%, color-mix(in srgb, var(--surface-soft) 82%, #fff) 50%, var(--surface-soft) 75%);
+      background-size: 200% 100%;
+    }
   }
 
   .hover-lift {
@@ -128,17 +153,31 @@
   }
 
   .bottom-nav {
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    /* Fallback */
+    background: rgba(255, 255, 255, 0.92);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.08);
+  }
+  @supports (background: color-mix(in srgb, red 50%, blue)) {
+    .bottom-nav {
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+    }
   }
 
   .sticky-header {
     @apply sticky top-0 z-30;
-    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    /* Fallback */
+    background: rgba(255, 255, 255, 0.90);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  @supports (background: color-mix(in srgb, red 50%, blue)) {
+    .sticky-header {
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+    }
   }
 
   .fab {
@@ -159,6 +198,16 @@
     border-color: var(--border);
     color: var(--text-primary);
   }
+}
+
+/* ── SVG line animation (replaces SVG <animate> for iOS performance) ── */
+@keyframes tree-line-dash {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+.tree-line-animate {
+  animation: tree-line-dash 4s linear infinite;
+  will-change: stroke-dashoffset;
 }
 
 @keyframes shimmer {

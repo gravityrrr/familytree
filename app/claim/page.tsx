@@ -75,7 +75,7 @@ function ClaimContent() {
       <header className="w-full max-w-lg mb-8 animate-fade-in-down flex items-center justify-between">
         <div className="flex items-center gap-3">
           <BrandLogo size={36} />
-          <h1 className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">KinRoot</h1>
+          <h1 className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">VamshaVrksha</h1>
         </div>
         <Button variant="secondary" onClick={() => router.push('/dashboard')}>Skip for now</Button>
       </header>

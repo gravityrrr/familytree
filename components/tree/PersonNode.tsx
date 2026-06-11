@@ -77,19 +77,27 @@ export function PersonNode({
       x={x - 30} 
       y={y - 40} 
       width={236} 
-      height={isHovered ? 350 : 170} 
-      style={{ pointerEvents: 'none' }}
-      className="overflow-visible"
+      height={350}
+      style={{ overflow: 'visible' }}
     >
+      {/* iOS WebKit: foreignObject content is treated as XHTML automatically */}
       <div
         data-tree-node="true"
         data-person-id={person.id}
-        className={`group relative w-[176px] mx-[30px] mt-[40px] cursor-pointer transition-all duration-300 press ${
+        className={`group relative w-[176px] mx-[30px] mt-[40px] cursor-pointer press ${
           isHovered 
             ? 'scale-110 -translate-y-2 z-50' 
             : 'hover:scale-105 hover:-translate-y-1'
         }`}
-        style={{ pointerEvents: 'auto' }}
+        style={{ 
+          pointerEvents: 'auto',
+          transition: 'transform 0.3s ease, opacity 0.3s ease',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          transform: isHovered 
+            ? 'scale(1.1) translateY(-8px) translateZ(0)' 
+            : 'translateZ(0)',
+        }}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -122,7 +130,7 @@ export function PersonNode({
           }}
         >
           {/* Main card background */}
-          <div className={`w-full min-h-[89px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 overflow-hidden pb-3 relative`}>
+          <div className={`w-full min-h-[89px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 pb-3 relative`}>
             {/* Light mode background */}
             <div className="absolute inset-0 dark:hidden rounded-[14px] -z-10" style={{ backgroundColor: isSelf ? '#F0F7FF' : colors.bg }} />
             {/* Dark mode background - solid dark slate to make text pop, with a subtle tint for 'isSelf' */}
