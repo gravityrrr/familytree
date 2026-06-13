@@ -87,11 +87,13 @@ function SettingsContent() {
 
   return (
     <div className="flex-1 w-full bg-mesh overflow-y-auto pb-24">
-      <header className="sticky-header px-4 sm:px-6 py-3 flex items-center gap-3 safe-top">
-        <Link href="/tree" className="p-2 rounded-xl transition-colors press hover:bg-[var(--surface-soft)]">
-          <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
-        </Link>
-        <h1 className="text-base font-bold text-[var(--text-primary)]">Settings</h1>
+      <header className="sticky-header border-b-2 border-slate-200 dark:border-slate-800 safe-top">
+        <div className="px-6 sm:px-8 py-3 flex items-center gap-3">
+          <Link href="/tree" className="p-2 -ml-2 rounded-xl transition-colors press hover:bg-[var(--surface-soft)]">
+            <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
+          </Link>
+          <h1 className="text-base font-bold text-[var(--text-primary)]">Settings</h1>
+        </div>
       </header>
 
       <div className="max-w-lg mx-auto p-4 sm:p-6 space-y-4 animate-fade-in-up pb-12">

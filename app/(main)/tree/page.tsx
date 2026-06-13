@@ -56,7 +56,8 @@ function TreePageContent() {
   if (loading || (!hasTree && !error)) {
     return (
       <div className="h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative overflow-hidden">
-        <header className="fixed top-4 left-4 right-4 z-30 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-lg flex items-center justify-between safe-top">
+        <header className="absolute top-0 left-0 right-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 shadow-sm safe-top">
+          <div className="px-6 sm:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
             <div>
@@ -65,6 +66,7 @@ function TreePageContent() {
             </div>
           </div>
           <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          </div>
         </header>
         <main className="flex-1 flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />

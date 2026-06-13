@@ -94,15 +94,17 @@ function RelationshipFinderContent() {
   if (treeLoading || authLoading) {
     return (
       <div className="h-full flex flex-col">
-        <header className="sticky top-0 z-30 px-4 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between safe-top">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
-            <div>
-              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-1" />
-              <div className="h-2 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 safe-top">
+          <div className="px-6 sm:px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              <div>
+                <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-1" />
+                <div className="h-2 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+              </div>
             </div>
+            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
         </header>
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
@@ -113,17 +115,19 @@ function RelationshipFinderContent() {
 
   return (
     <div className="flex-1 w-full flex flex-col pb-24 overflow-y-auto">
-      <header className="sticky top-0 z-30 px-4 py-3 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between safe-top">
-        <div className="flex items-center gap-3">
-          <Link href="/tree" className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-            <ArrowLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-          </Link>
-          <div>
-            <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">Relationship Finder</h1>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{activeTree?.name}</p>
+      <header className="sticky top-0 z-30 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 safe-top">
+        <div className="px-6 sm:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/tree" className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            </Link>
+            <div>
+              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">Relationship Finder</h1>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{activeTree?.name}</p>
+            </div>
           </div>
+          <ThemeToggle compact />
         </div>
-        <ThemeToggle compact />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">

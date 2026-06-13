@@ -15,7 +15,8 @@ export function TreeHeader() {
   const selfPerson = selfPersonId ? persons.find(p => p.id === selfPersonId) : null;
 
   return (
-    <header className="fixed top-4 left-4 right-4 z-30 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-lg flex items-center justify-between safe-top">
+    <header className="absolute top-0 left-0 right-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 shadow-sm safe-top">
+      <div className="px-6 sm:px-8 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors">
           <LayoutDashboard className="w-4 h-4" />
@@ -32,6 +33,7 @@ export function TreeHeader() {
             <Avatar firstName={selfPerson.first_name} lastName={selfPerson.last_name} photoUrl={selfPerson.photo_url} size="sm" generationLevel={3} />
           </Link>
         )}
+      </div>
       </div>
     </header>
   );

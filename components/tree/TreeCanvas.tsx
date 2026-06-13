@@ -3,6 +3,8 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import type { Person, Relationship, TreeNode } from '@/types';
 import { buildTreeLayout, flattenTree } from '@/lib/utils';
+import { buildGraph, findShortestPath, calculateRelationshipTerms } from '@/lib/graph';
+import { inferTeluguRelationship } from '@/lib/relationships';
 import { PersonNode } from './PersonNode';
 import { RelationshipLine, LineGradientDefs } from './RelationshipLine';
 import { Users, ZoomIn, ZoomOut, Target } from 'lucide-react';
@@ -15,7 +17,7 @@ interface TreeCanvasProps {
 }
 
 const NODE_WIDTH = 176;
-const NODE_HEIGHT = 92;
+const NODE_HEIGHT = 108;
 const SPOUSE_GAP = 196;
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
@@ -105,6 +107,30 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     ...flatNodes.map((n) => ({ key: n.person.id, person: n.person, x: n.x, y: n.y, generation: n.generation })),
     ...spouseNodes,
   ];
+
+  // Pre-calculate relationship terms
+  const relationshipMap = React.useMemo(() => {
+    if (!selfPersonId) return new Map<string, string>();
+    const graph = buildGraph(persons, relationships);
+    const map = new Map<string, string>();
+    const selfPerson = persons.find(p => p.id === selfPersonId);
+    if (!selfPerson) return map;
+
+    for (const p of persons) {
+      if (p.id === selfPersonId) {
+        map.set(p.id, 'Self');
+        continue;
+      }
+      const path = findShortestPath(graph, selfPersonId, p.id);
+      if (path && path.length > 0) {
+        const inversePath = findShortestPath(graph, p.id, selfPersonId);
+        const basic = calculateRelationshipTerms(inversePath || path, p.gender || 'other', selfPerson.gender || 'other');
+        const telugu = inferTeluguRelationship(selfPerson, p, persons, relationships);
+        map.set(p.id, telugu ? telugu.label : basic.telugu);
+      }
+    }
+    return map;
+  }, [selfPersonId, persons, relationships]);
 
   const sortedNodes = [...allNodes].sort((a, b) => {
     if (a.person.id === hoveredNodeId) return 1;
@@ -639,6 +665,7 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
             y={n.y}
             generation={n.generation}
             isSelf={n.person.id === selfPersonId}
+            relationshipLabel={relationshipMap.get(n.person.id)}
             selected={selectedNodeId === n.person.id}
             isHovered={hoveredNodeId === n.person.id}
             onHoverChange={(h) => setHoveredNodeId(h ? n.person.id : null)}

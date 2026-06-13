@@ -14,6 +14,7 @@ interface PersonNodeProps {
   generation: number;
   selected?: boolean;
   isSelf?: boolean;
+  relationshipLabel?: string;
   isHovered?: boolean;
   onHoverChange?: (isHovered: boolean) => void;
   onNodeDoubleClick?: () => void;
@@ -27,6 +28,7 @@ export function PersonNode({
   generation, 
   selected = false, 
   isSelf = false, 
+  relationshipLabel,
   isHovered = false,
   onHoverChange,
   onNodeDoubleClick, 
@@ -121,7 +123,7 @@ export function PersonNode({
           }}
         >
           {/* Main card background */}
-          <div className="w-full min-h-[89px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 pb-3 relative overflow-hidden">
+          <div className="w-full min-h-[105px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 pb-3 relative overflow-hidden">
             {/* Light mode background */}
             <div className="absolute inset-0 dark:hidden rounded-[14px] -z-10" style={{ backgroundColor: isSelf ? '#F0F7FF' : colors.bg }} />
             {/* Dark mode background */}
@@ -137,6 +139,22 @@ export function PersonNode({
                   {lifespan}
                 </p>
               )}
+              {isSelf ? (
+                <div className="mt-1.5 flex justify-center">
+                  <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500 text-white shadow-sm">
+                    You
+                  </span>
+                </div>
+              ) : relationshipLabel ? (
+                <div className="mt-1.5 flex justify-center">
+                  <span 
+                    className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-600 dark:bg-slate-700 text-white shadow-sm truncate max-w-[140px]"
+                    title={relationshipLabel}
+                  >
+                    {relationshipLabel}
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             {/* Expanded Details on Hover */}
@@ -176,13 +194,7 @@ export function PersonNode({
         />
       </div>
       
-      {/* "You" badge */}
-      {isSelf && (
-        <span className="absolute -top-3 right-3.5 z-20 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500 text-white shadow-sm border border-white dark:border-gray-800 pointer-events-none">
-          You
-        </span>
-      )}
-      
+
       {/* Selection highlight */}
       {selected && (
         <div 

@@ -137,16 +137,15 @@ export async function getPersonsInTree(treeId: string): Promise<Person[]> {
 
 export async function findPersonByIdentity(
   treeId: string, 
-  identity: { phone?: string | null, email?: string | null, aadhar_number?: string | null }
+  identity: { phone?: string | null, email?: string | null }
 ): Promise<Person | null> {
-  if (!identity.phone && !identity.email && !identity.aadhar_number) return null;
+  if (!identity.phone && !identity.email) return null;
   
   let query = getSupabase().from('persons').select('*').eq('tree_id', treeId);
   
   const conditions = [];
   if (identity.phone) conditions.push(`phone.eq.${identity.phone}`);
   if (identity.email) conditions.push(`email.eq.${identity.email}`);
-  if (identity.aadhar_number) conditions.push(`aadhar_number.eq.${identity.aadhar_number}`);
   
   if (conditions.length === 0) return null;
   
@@ -191,7 +190,7 @@ export async function createGothra(name: string): Promise<Gothra> {
 
 export async function createPerson(personData: Partial<Person>): Promise<{ person: Person, isNew: boolean }> {
   // Check for existing person if identity fields are provided
-  if (personData.tree_id && (personData.phone || personData.email || personData.aadhar_number)) {
+  if (personData.tree_id && (personData.phone || personData.email)) {
     const existing = await findPersonByIdentity(personData.tree_id, personData);
     if (existing) {
       return { person: existing, isNew: false };
@@ -207,7 +206,6 @@ export async function createPerson(personData: Partial<Person>): Promise<{ perso
     if (error.code === '23505') {
       if (error.message.includes('phone')) throw new Error('This phone number already exists in the tree.');
       if (error.message.includes('email')) throw new Error('This email address already exists in the tree.');
-      if (error.message.includes('aadhar')) throw new Error('This Aadhaar number already exists in the tree.');
       throw new Error('A person with this unique identifier already exists.');
     }
     throw error;
@@ -229,7 +227,6 @@ export async function updatePerson(
     if (error.code === '23505') {
       if (error.message.includes('phone')) throw new Error('This phone number already exists in the tree.');
       if (error.message.includes('email')) throw new Error('This email address already exists in the tree.');
-      if (error.message.includes('aadhar')) throw new Error('This Aadhaar number already exists in the tree.');
       throw new Error('A person with this unique identifier already exists.');
     }
     throw error;
@@ -250,7 +247,7 @@ export async function searchPersons(
     .from('persons')
     .select('*')
     .eq('tree_id', treeId)
-    .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,nickname.ilike.%${query}%`)
+    .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,nickname.ilike.%${query}%,phone.ilike.%${query}%,gothra.ilike.%${query}%`)
     .order('first_name', { ascending: true })
     .limit(20);
   if (error) throw error;

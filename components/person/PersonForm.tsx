@@ -81,7 +81,7 @@ export function PersonForm({
   const [bio, setBio] = useState(initialData.bio || '');
   const [phone, setPhone] = useState(initialData.phone || '');
   const [email, setEmail] = useState(initialData.email || '');
-  const [aadharNumber, setAadharNumber] = useState(initialData.aadhar_number || '');
+
   const [generateSystemId, setGenerateSystemId] = useState(false);
   const systemId = initialData.system_id || '';
   
@@ -94,8 +94,8 @@ export function PersonForm({
     setErrorMsg('');
     
     // Identity Validation
-    if (!phone && !aadharNumber && !email && !systemId && !generateSystemId) {
-      setErrorMsg('Please provide a Phone number or Aadhaar, or check the box to generate a System ID.');
+    if (!phone && !email && !systemId && !generateSystemId) {
+      setErrorMsg('Please provide a Phone number or Email, or check the box to generate a System ID.');
       return;
     }
 
@@ -123,7 +123,7 @@ export function PersonForm({
         bio: bio || null,
         phone: phone || null,
         email: email || null,
-        aadhar_number: aadharNumber || null,
+
         system_id: finalSystemId || null,
       });
     } catch (err: any) {
@@ -255,13 +255,7 @@ export function PersonForm({
           placeholder="+91 9876543210"
           id="person-phone"
         />
-        <Input
-          label="Aadhaar Number"
-          value={aadharNumber}
-          onChange={(e) => setAadharNumber(e.target.value)}
-          placeholder="XXXX XXXX XXXX"
-          id="person-aadhar"
-        />
+
         <Input
           label="Email Address (Optional)"
           type="email"
@@ -280,7 +274,7 @@ export function PersonForm({
               className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-brand-500 focus:ring-brand-500"
             />
             <div className="flex-1">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100 block">I don't have their Phone or Aadhaar</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-slate-100 block">I don't have their Phone or Email</span>
               <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">The system will generate a unique ID for this person.</span>
             </div>
           </label>

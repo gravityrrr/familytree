@@ -66,7 +66,7 @@ export interface Person {
   photo_url: string | null;
   phone: string | null;
   email: string | null;
-  aadhar_number: string | null;
+
   system_id: string | null;
   gothra: string | null;
   created_by: string | null;

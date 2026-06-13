@@ -16,15 +16,34 @@ export default function PeoplePage() {
   const { selfPersonId, canEdit } = useAuth();
   const { persons, loading, hasTree, error } = useTree();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGothra, setSelectedGothra] = useState('');
+
+  const availableGothras = useMemo(() => {
+    const gothras = new Set<string>();
+    persons.forEach(p => {
+      if (p.gothra) gothras.add(p.gothra.trim());
+    });
+    return Array.from(gothras).sort();
+  }, [persons]);
 
   const filteredPersons = useMemo(() => {
-    if (!searchQuery.trim()) return persons;
-    const q = searchQuery.toLowerCase();
-    return persons.filter(p => 
-      p.first_name.toLowerCase().includes(q) || 
-      (p.last_name?.toLowerCase().includes(q))
-    );
-  }, [persons, searchQuery]);
+    let result = persons;
+    
+    if (selectedGothra) {
+      result = result.filter(p => p.gothra?.trim() === selectedGothra);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.first_name.toLowerCase().includes(q) || 
+        (p.last_name?.toLowerCase().includes(q)) ||
+        (p.phone?.toLowerCase().includes(q))
+      );
+    }
+    
+    return result;
+  }, [persons, searchQuery, selectedGothra]);
 
   useEffect(() => {
     if (!loading && !hasTree && !error) {
@@ -45,15 +64,27 @@ export default function PeoplePage() {
       <TreeHeader />
 
       <main className="flex-1 overflow-y-auto px-4 sm:px-6 space-y-4 pt-24 pb-28">
-        <div className="relative group mb-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200 pointer-events-none" />
-          <Input 
-            placeholder="Search family members..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            className="pl-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" 
-            id="search-persons" 
-          />
+        <div className="flex gap-2 mb-4">
+          <div className="relative group flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200 pointer-events-none" />
+            <Input 
+              placeholder="Search by name or phone..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              className="pl-11 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" 
+              id="search-persons" 
+            />
+          </div>
+          <select
+            value={selectedGothra}
+            onChange={(e) => setSelectedGothra(e.target.value)}
+            className="px-4 py-3 bg-white dark:bg-slate-800 text-[var(--text-primary)] border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 max-w-[140px] sm:max-w-[180px] truncate"
+          >
+            <option value="">All Gothras</option>
+            {availableGothras.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
         </div>
         
         {persons.length === 0 && (
@@ -66,10 +97,10 @@ export default function PeoplePage() {
           </div>
         )}
         
-        {searchQuery && filteredPersons.length === 0 && (
+        {(searchQuery || selectedGothra) && filteredPersons.length === 0 && (
           <div className="text-center py-12 animate-fade-in">
             <Search className="w-10 h-10 text-slate-400/40 mx-auto mb-3" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">No results for &ldquo;{searchQuery}&rdquo;</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No results found.</p>
           </div>
         )}
         

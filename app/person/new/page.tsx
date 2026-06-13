@@ -78,15 +78,17 @@ function NewPersonContent() {
 
   return (
     <div className="min-h-screen-safe bg-slate-50 dark:bg-slate-950">
-      <header className="fixed top-4 left-4 right-4 z-30 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl shadow-lg flex items-center justify-between safe-top">
-        <button onClick={() => router.push('/tree')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-        </button>
-        <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">Add Person</h1>
-        <div className="w-9" />
+      <header className="sticky-header border-b-2 border-slate-200 dark:border-slate-800 safe-top">
+        <div className="px-6 sm:px-8 py-3 flex items-center justify-between">
+          <button onClick={() => router.push('/tree')} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors press">
+            <ArrowLeft className="w-5 h-5 text-[var(--text-muted)]" />
+          </button>
+          <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">Add Person</h1>
+          <div className="w-9" />
+        </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 sm:px-6 py-4 space-y-5 animate-fade-in-up pt-24 pb-12">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-4 space-y-5 animate-fade-in-up pt-6 pb-12">
         {/* Link to existing person */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl p-5">
           <div className="flex items-center gap-2.5 mb-3">
