@@ -64,7 +64,7 @@ export function PersonNode({
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     hoverTimerRef.current = setTimeout(() => {
       onHoverChange?.(true);
-    }, 400); // 400ms delay to prevent accidental hovers while moving mouse fast
+    }, 400);
   };
 
   const handleMouseLeave = () => {
@@ -73,49 +73,40 @@ export function PersonNode({
   };
 
   return (
-    <foreignObject 
-      x={x - 30} 
-      y={y - 40} 
-      width={236} 
-      height={350}
-      style={{ overflow: 'visible' }}
+    <div
+      data-tree-node="true"
+      data-person-id={person.id}
+      className="group absolute cursor-pointer"
+      style={{
+        left: x,
+        top: y,
+        width: 176,
+        zIndex: isHovered ? 50 : selected ? 10 : 1,
+      }}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* iOS WebKit: foreignObject content is treated as XHTML automatically */}
-      <div
-        data-tree-node="true"
-        data-person-id={person.id}
-        className={`group relative w-[176px] mx-[30px] mt-[40px] cursor-pointer press ${
-          isHovered 
-            ? 'scale-110 -translate-y-2 z-50' 
-            : 'hover:scale-105 hover:-translate-y-1'
-        }`}
-        style={{ 
-          pointerEvents: 'auto',
-          transition: 'transform 0.3s ease, opacity 0.3s ease',
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          transform: isHovered 
-            ? 'scale(1.1) translateY(-8px) translateZ(0)' 
-            : 'translateZ(0)',
+      {/* Link Handle */}
+      <div 
+        className={`absolute -right-3 top-6 z-30 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onLinkStart?.(e, person.id);
         }}
-        onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Link Handle */}
-        <div 
-          className={`absolute -right-3 top-6 z-30 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            onLinkStart?.(e, person.id);
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md cursor-grab active:cursor-grabbing hover:scale-110 transition-transform border-2 border-white dark:border-slate-900">
-            <Link2 className="w-3.5 h-3.5" />
-          </div>
+        <div className="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md cursor-grab active:cursor-grabbing hover:scale-110 transition-transform border-2 border-white dark:border-slate-900">
+          <Link2 className="w-3.5 h-3.5" />
         </div>
+      </div>
 
+      {/* Card wrapper with hover animation */}
+      <div
+        className={`transition-transform duration-300 ${
+          isHovered ? 'scale-110 -translate-y-2' : 'hover:scale-105 hover:-translate-y-1'
+        }`}
+      >
         {/* Animated glowing border background */}
         <div 
           className={`w-full rounded-2xl transition-all duration-300 ${selected ? 'animate-pulse-soft opacity-100' : (isHovered ? 'opacity-100' : 'opacity-90')}`}
@@ -130,10 +121,10 @@ export function PersonNode({
           }}
         >
           {/* Main card background */}
-          <div className={`w-full min-h-[89px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 pb-3 relative`}>
+          <div className="w-full min-h-[89px] rounded-[14px] shadow-inner-glow flex flex-col items-center justify-start pt-7 pb-3 relative overflow-hidden">
             {/* Light mode background */}
             <div className="absolute inset-0 dark:hidden rounded-[14px] -z-10" style={{ backgroundColor: isSelf ? '#F0F7FF' : colors.bg }} />
-            {/* Dark mode background - solid dark slate to make text pop, with a subtle tint for 'isSelf' */}
+            {/* Dark mode background */}
             <div className={`absolute inset-0 hidden dark:block rounded-[14px] -z-10 ${isSelf ? 'bg-slate-800' : 'bg-slate-900'}`} />
 
             {/* Basic Info */}
@@ -172,33 +163,33 @@ export function PersonNode({
             )}
           </div>
         </div>
-
-        {/* Overlapping Avatar */}
-        <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10 drop-shadow-md transition-transform duration-300 hover:scale-110" style={{ pointerEvents: 'none' }}>
-          <Avatar 
-            firstName={person.first_name} 
-            lastName={person.last_name} 
-            photoUrl={person.photo_url} 
-            size="md" 
-            generationLevel={generation} 
-          />
-        </div>
-        
-        {/* "You" badge */}
-        {isSelf && (
-          <span className="absolute -top-3 right-3.5 z-20 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500 text-white shadow-sm border border-white dark:border-gray-800" style={{ pointerEvents: 'none' }}>
-            You
-          </span>
-        )}
-        
-        {/* Selection highlight */}
-        {selected && (
-          <div 
-            className="absolute -inset-1 rounded-3xl animate-pulse-soft -z-10 blur-md pointer-events-none"
-            style={{ backgroundColor: `${colors.ring}40` }}
-          />
-        )}
       </div>
-    </foreignObject>
+
+      {/* Overlapping Avatar */}
+      <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10 drop-shadow-md transition-transform duration-300 hover:scale-110 pointer-events-none">
+        <Avatar 
+          firstName={person.first_name} 
+          lastName={person.last_name} 
+          photoUrl={person.photo_url} 
+          size="md" 
+          generationLevel={generation} 
+        />
+      </div>
+      
+      {/* "You" badge */}
+      {isSelf && (
+        <span className="absolute -top-3 right-3.5 z-20 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-500 text-white shadow-sm border border-white dark:border-gray-800 pointer-events-none">
+          You
+        </span>
+      )}
+      
+      {/* Selection highlight */}
+      {selected && (
+        <div 
+          className="absolute -inset-1 rounded-3xl animate-pulse-soft -z-10 blur-md pointer-events-none"
+          style={{ backgroundColor: `${colors.ring}40` }}
+        />
+      )}
+    </div>
   );
 }

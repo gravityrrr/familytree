@@ -40,7 +40,7 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
 
   // Allow login page without auth
-  if (!session && !req.nextUrl.pathname.startsWith('/login')) {
+  if (!session && !req.nextUrl.pathname.startsWith('/login') && !req.nextUrl.pathname.startsWith('/claim') && req.nextUrl.pathname !== '/') {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
@@ -53,5 +53,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api|icons|manifest.json|sw.js).*)'],
 };

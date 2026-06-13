@@ -29,7 +29,7 @@ interface RenderNode {
 }
 
 export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelationship }: TreeCanvasProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [dragging, setDragging] = useState(false);
@@ -68,11 +68,9 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const initialPinchDistRef = useRef<number | null>(null);
   const initialPinchZoomRef = useRef<number | null>(null);
 
-  // Keep refs in sync
   useEffect(() => { panRef.current = pan; }, [pan]);
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
 
-  // Detect if device has touch support (for hiding custom cursor on mobile)
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -84,7 +82,6 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const spouseNodes: RenderNode[] = [];
   const lines: React.ReactNode[] = [];
 
-  // 1. Collect all spouse nodes and draw spouse lines
   function collectSpouses(node: TreeNode) {
     node.spouses.forEach((spouse, i) => {
       const sx = node.x + NODE_WIDTH + 20 + i * SPOUSE_GAP;
@@ -109,14 +106,13 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     ...spouseNodes,
   ];
 
-  // Sort nodes so the hovered node is rendered last (on top)
   const sortedNodes = [...allNodes].sort((a, b) => {
     if (a.person.id === hoveredNodeId) return 1;
     if (b.person.id === hoveredNodeId) return -1;
     return 0;
   });
 
-  // 2. Build maps from relationships for global line drawing
+  // Build maps from relationships for line drawing
   const nodePos = new Map<string, { x: number, y: number }>();
   allNodes.forEach(n => nodePos.set(n.person.id, { x: n.x, y: n.y }));
 
@@ -136,21 +132,18 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       const s1 = personSpouses.get(rel.person_id) || [];
       if (!s1.includes(rel.related_person_id)) s1.push(rel.related_person_id);
       personSpouses.set(rel.person_id, s1);
-
       const s2 = personSpouses.get(rel.related_person_id) || [];
       if (!s2.includes(rel.person_id)) s2.push(rel.person_id);
       personSpouses.set(rel.related_person_id, s2);
     }
   });
 
-  // 3. Draw parent-child lines globally
   allNodes.forEach((childNode) => {
     const parents = childToParents.get(childNode.person.id) || [];
     if (parents.length === 0) return;
 
     const handledParents = new Set<string>();
     
-    // Check if any two parents are spouses to draw a unified V-line
     if (parents.length >= 2) {
       for (let i = 0; i < parents.length; i++) {
         for (let j = i + 1; j < parents.length; j++) {
@@ -160,7 +153,6 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
             const pos1 = nodePos.get(p1);
             const pos2 = nodePos.get(p2);
             if (pos1 && pos2 && !handledParents.has(p1) && !handledParents.has(p2)) {
-              // Midpoint of the spouse line
               const midX = (pos1.x + pos2.x + NODE_WIDTH) / 2;
               const midY = pos1.y + NODE_HEIGHT / 2;
               lines.push(
@@ -175,7 +167,6 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       }
     }
 
-    // Draw individual lines for any parents that weren't part of a spouse pair
     parents.forEach(p => {
       if (!handledParents.has(p)) {
         const pos = nodePos.get(p);
@@ -191,10 +182,10 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
 
   const contentBounds = allNodes.reduce(
     (acc, node) => ({
-      minX: Math.min(acc.minX, node.x),
-      minY: Math.min(acc.minY, node.y),
-      maxX: Math.max(acc.maxX, node.x + NODE_WIDTH),
-      maxY: Math.max(acc.maxY, node.y + NODE_HEIGHT),
+      minX: Math.min(acc.minX, node.x - 40),
+      minY: Math.min(acc.minY, node.y - 40),
+      maxX: Math.max(acc.maxX, node.x + NODE_WIDTH + 40),
+      maxY: Math.max(acc.maxY, node.y + NODE_HEIGHT + 40),
     }),
     { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
   );
@@ -202,9 +193,9 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const hasValidBounds = Number.isFinite(contentBounds.minX);
 
   const clampPan = useCallback((nextPan: { x: number; y: number }, nextZoom: number) => {
-    if (!svgRef.current || !hasValidBounds) return nextPan;
+    if (!containerRef.current || !hasValidBounds) return nextPan;
 
-    const rect = svgRef.current.getBoundingClientRect();
+    const rect = containerRef.current.getBoundingClientRect();
     const vw = rect.width;
     const vh = rect.height;
     
@@ -225,12 +216,10 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     if (minPanX <= maxPanX) {
       clampedX = Math.min(Math.max(clampedX, minPanX), maxPanX);
     }
-
     let clampedY = nextPan.y;
     if (minPanY <= maxPanY) {
       clampedY = Math.min(Math.max(clampedY, minPanY), maxPanY);
     }
-
     return { x: clampedX, y: clampedY };
   }, [contentBounds.maxX, contentBounds.maxY, contentBounds.minX, contentBounds.minY, hasValidBounds]);
 
@@ -244,40 +233,30 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const startInertia = useCallback(() => {
     const friction = 0.92;
     const minVelocity = 0.05;
-
     const tick = () => {
       velocityRef.current.x *= friction;
       velocityRef.current.y *= friction;
-
       if (Math.abs(velocityRef.current.x) < minVelocity && Math.abs(velocityRef.current.y) < minVelocity) {
         stopAnimation();
         return;
       }
-
       setPan((prev) => clampPan({
         x: prev.x + velocityRef.current.x * 16,
         y: prev.y + velocityRef.current.y * 16,
       }, zoom));
-
       animationRef.current = requestAnimationFrame(tick);
     };
-
     stopAnimation();
     animationRef.current = requestAnimationFrame(tick);
   }, [clampPan, stopAnimation, zoom]);
 
-  // Center on self node or tree center on first load
+  // Center on self node on first load
   const hasCentered = useRef(false);
   useEffect(() => {
-    if (flatNodes.length > 0 && svgRef.current && !hasCentered.current) {
+    if (flatNodes.length > 0 && containerRef.current && !hasCentered.current) {
       hasCentered.current = true;
-      const rect = svgRef.current.getBoundingClientRect();
-
-      // Try to center on self node
-      const selfNode = selfPersonId
-        ? allNodes.find(n => n.person.id === selfPersonId)
-        : null;
-
+      const rect = containerRef.current.getBoundingClientRect();
+      const selfNode = selfPersonId ? allNodes.find(n => n.person.id === selfPersonId) : null;
       if (selfNode) {
         const centerX = rect.width / 2 - (selfNode.x + NODE_WIDTH / 2);
         const centerY = rect.height / 2 - (selfNode.y + NODE_HEIGHT / 2);
@@ -295,19 +274,16 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   }, [flatNodes.length]);
 
   useEffect(() => {
-    if (!svgRef.current) return;
-
+    if (!containerRef.current) return;
     const updateViewport = () => {
-      if (!svgRef.current) return;
-      const rect = svgRef.current.getBoundingClientRect();
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
       setViewport({ width: rect.width, height: rect.height });
     };
-
     updateViewport();
     const observer = new ResizeObserver(updateViewport);
-    observer.observe(svgRef.current);
+    observer.observe(containerRef.current);
     window.addEventListener('resize', updateViewport);
-
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', updateViewport);
@@ -316,6 +292,7 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
 
   useEffect(() => () => stopAnimation(), [stopAnimation]);
 
+  // ── Mouse handlers (desktop) ──
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (linkModal) return;
     if ((e.target as Element).closest('[data-tree-node="true"]')) return;
@@ -327,25 +304,17 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   }, [pan, stopAnimation, linkModal]);
 
   const handleLinkStart = useCallback((e: React.MouseEvent, personId: string) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left - pan.x) / zoom;
     const y = (e.clientY - rect.top - pan.y) / zoom;
-    
-    setLinkDrag({
-      startNodeId: personId,
-      startX: x,
-      startY: y,
-      currentX: x,
-      currentY: y,
-    });
+    setLinkDrag({ startNodeId: personId, startX: x, startY: y, currentX: x, currentY: y });
   }, [pan, zoom]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (svgRef.current) {
-      const rect = svgRef.current.getBoundingClientRect();
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
       setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-      
       if (linkDrag) {
         setLinkDrag(prev => prev ? {
           ...prev,
@@ -355,20 +324,14 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
         return;
       }
     }
-    
     if (!dragging) return;
-
     const now = performance.now();
     const prev = lastMoveRef.current;
     if (prev) {
       const dt = Math.max(8, now - prev.t);
-      velocityRef.current = {
-        x: (e.clientX - prev.x) / dt,
-        y: (e.clientY - prev.y) / dt,
-      };
+      velocityRef.current = { x: (e.clientX - prev.x) / dt, y: (e.clientY - prev.y) / dt };
     }
     lastMoveRef.current = { x: e.clientX, y: e.clientY, t: now };
-
     setPan(clampPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }, zoom));
   }, [clampPan, dragging, dragStart, zoom, linkDrag, pan]);
 
@@ -377,23 +340,14 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       const nodeEl = (e.target as Element).closest('[data-tree-node="true"]');
       if (nodeEl) {
         const targetId = nodeEl.getAttribute('data-person-id');
-        if (targetId && targetId !== linkDrag.startNodeId) {
-          // Open Modal
-          if (svgRef.current) {
-            const rect = svgRef.current.getBoundingClientRect();
-            setLinkModal({
-              sourceId: linkDrag.startNodeId,
-              targetId,
-              x: e.clientX - rect.left,
-              y: e.clientY - rect.top,
-            });
-          }
+        if (targetId && targetId !== linkDrag.startNodeId && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          setLinkModal({ sourceId: linkDrag.startNodeId, targetId, x: e.clientX - rect.left, y: e.clientY - rect.top });
         }
       }
       setLinkDrag(null);
       return;
     }
-
     if (dragging) {
       const velocity = Math.hypot(velocityRef.current.x, velocityRef.current.y);
       if (velocity > 0.08) startInertia();
@@ -405,16 +359,13 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   const handleWheel = useCallback((e: React.WheelEvent) => {
     stopAnimation();
     const isPinch = e.ctrlKey || e.metaKey;
-
     setZoom((z) => {
       const zoomFactor = isPinch ? 0.01 : 0.002;
       const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z - e.deltaY * zoomFactor));
-      
-      if (svgRef.current) {
-        const rect = svgRef.current.getBoundingClientRect();
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        
         setPan((prev) => {
           const newX = mouseX - (mouseX - prev.x) * (nextZoom / z);
           const newY = mouseY - (mouseY - prev.y) * (nextZoom / z);
@@ -427,29 +378,24 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     });
   }, [clampPan, stopAnimation]);
 
-  // ── Native touch handlers (non-passive, so preventDefault works on iOS WebKit) ──
+  // ── Native touch handlers (non-passive for iOS) ──
   const clampPanRef = useRef(clampPan);
   useEffect(() => { clampPanRef.current = clampPan; }, [clampPan]);
-
   const stopAnimationRef = useRef(stopAnimation);
   useEffect(() => { stopAnimationRef.current = stopAnimation; }, [stopAnimation]);
-
   const startInertiaRef = useRef(startInertia);
   useEffect(() => { startInertiaRef.current = startInertia; }, [startInertia]);
 
   useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
+    const el = containerRef.current;
+    if (!el) return;
 
-    const getPinchDistance = (touches: TouchList) => {
-      return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-    };
+    const getPinchDistance = (touches: TouchList) =>
+      Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 
     const onTouchStart = (e: TouchEvent) => {
-      // Always prevent default to stop iOS scroll/bounce/rubber-banding
       e.preventDefault();
       stopAnimationRef.current();
-
       if (e.touches.length === 1) {
         const t = e.touches[0];
         touchStartRef.current = { x: t.clientX - panRef.current.x, y: t.clientY - panRef.current.y };
@@ -458,26 +404,21 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       } else if (e.touches.length === 2) {
         initialPinchDistRef.current = getPinchDistance(e.touches);
         initialPinchZoomRef.current = zoomRef.current;
-        touchStartRef.current = null; // cancel single-finger pan during pinch
+        touchStartRef.current = null;
       }
     };
 
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-
       if (e.touches.length === 1 && touchStartRef.current) {
         const t = e.touches[0];
         const now = performance.now();
         const prev = lastMoveRef.current;
         if (prev) {
           const dt = Math.max(8, now - prev.t);
-          velocityRef.current = {
-            x: (t.clientX - prev.x) / dt,
-            y: (t.clientY - prev.y) / dt,
-          };
+          velocityRef.current = { x: (t.clientX - prev.x) / dt, y: (t.clientY - prev.y) / dt };
         }
         lastMoveRef.current = { x: t.clientX, y: t.clientY, t: now };
-
         const nextPan = clampPanRef.current(
           { x: t.clientX - touchStartRef.current.x, y: t.clientY - touchStartRef.current.y },
           zoomRef.current
@@ -489,13 +430,11 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
           x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
           y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
         };
-        const rect = svg.getBoundingClientRect();
+        const rect = el.getBoundingClientRect();
         const localCenterX = center.x - rect.left;
         const localCenterY = center.y - rect.top;
-
         const scale = dist / initialPinchDistRef.current;
         const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, initialPinchZoomRef.current * scale));
-
         setZoom((z) => {
           setPan((prev) => {
             const newX = localCenterX - (localCenterX - prev.x) * (nextZoom / z);
@@ -509,17 +448,13 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
 
     const onTouchEnd = (e: TouchEvent) => {
       if (e.touches.length === 0) {
-        // All fingers lifted — apply inertia if velocity is sufficient
         const velocity = Math.hypot(velocityRef.current.x, velocityRef.current.y);
-        if (velocity > 0.08) {
-          startInertiaRef.current();
-        }
+        if (velocity > 0.08) startInertiaRef.current();
         touchStartRef.current = null;
         initialPinchDistRef.current = null;
         initialPinchZoomRef.current = null;
         lastMoveRef.current = null;
       } else if (e.touches.length === 1) {
-        // Went from pinch to single finger — reset single-finger pan origin
         const t = e.touches[0];
         touchStartRef.current = { x: t.clientX - panRef.current.x, y: t.clientY - panRef.current.y };
         initialPinchDistRef.current = null;
@@ -529,24 +464,21 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       }
     };
 
-    // Attach with { passive: false } — critical for iOS WebKit preventDefault() to work
-    svg.addEventListener('touchstart', onTouchStart, { passive: false });
-    svg.addEventListener('touchmove', onTouchMove, { passive: false });
-    svg.addEventListener('touchend', onTouchEnd, { passive: false });
-
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: false });
     return () => {
-      svg.removeEventListener('touchstart', onTouchStart);
-      svg.removeEventListener('touchmove', onTouchMove);
-      svg.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
     };
-  }, []); // Empty deps — uses refs for all mutable state
+  }, []);
 
   const handleZoomChange = useCallback((newZoom: number) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    
     setZoom((z) => {
       const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
       setPan((prev) => {
@@ -559,11 +491,9 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   }, [clampPan]);
 
   const centerOnSelf = useCallback(() => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const selfNode = selfPersonId ? allNodes.find(n => n.person.id === selfPersonId) : null;
-
     if (selfNode) {
       const target = clampPan({
         x: rect.width / 2 - (selfNode.x + NODE_WIDTH / 2),
@@ -584,9 +514,8 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
   }, [selfPersonId, clampPan, flatNodes.length]);
 
   const centerNode = useCallback((node: { x: number; y: number; person: Person }) => {
-    if (!svgRef.current) return;
-
-    const rect = svgRef.current.getBoundingClientRect();
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const target = clampPan(
       {
         x: rect.width / 2 - (node.x + NODE_WIDTH / 2) * zoom,
@@ -594,34 +523,28 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
       },
       zoom
     );
-
     setSelectedNodeId(node.person.id);
     setPan(target);
   }, [clampPan, zoom]);
 
   const handleMinimapJump = useCallback((clientX: number, clientY: number) => {
-    if (!hasValidBounds || !svgRef.current || viewport.width === 0 || viewport.height === 0) return;
-
+    if (!hasValidBounds || !containerRef.current || viewport.width === 0 || viewport.height === 0) return;
     const mapWidth = 180;
     const mapHeight = 120;
     const mapPadding = 8;
     const contentWidth = contentBounds.maxX - contentBounds.minX;
     const contentHeight = contentBounds.maxY - contentBounds.minY;
     const scale = Math.min((mapWidth - mapPadding * 2) / contentWidth, (mapHeight - mapPadding * 2) / contentHeight);
-
-    const box = svgRef.current.parentElement?.querySelector('[data-minimap="true"]')?.getBoundingClientRect();
+    const box = containerRef.current.querySelector('[data-minimap="true"]')?.getBoundingClientRect();
     if (!box) return;
-
     const localX = clientX - box.left;
     const localY = clientY - box.top;
     const contentX = (localX - mapPadding) / scale + contentBounds.minX;
     const contentY = (localY - mapPadding) / scale + contentBounds.minY;
-
     const targetPan = clampPan({
       x: viewport.width / 2 - contentX * zoom,
       y: viewport.height / 2 - contentY * zoom,
     }, zoom);
-
     setPan(targetPan);
   }, [clampPan, contentBounds.maxX, contentBounds.maxY, contentBounds.minX, contentBounds.minY, hasValidBounds, viewport.height, viewport.width, zoom]);
 
@@ -639,54 +562,62 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
     );
   }
 
+  // SVG viewBox sized to content bounds (with padding)
+  const svgMinX = hasValidBounds ? contentBounds.minX - 100 : 0;
+  const svgMinY = hasValidBounds ? contentBounds.minY - 100 : 0;
+  const svgWidth = hasValidBounds ? (contentBounds.maxX - contentBounds.minX + 200) : 1000;
+  const svgHeight = hasValidBounds ? (contentBounds.maxY - contentBounds.minY + 200) : 1000;
+
   return (
-    <div className="relative w-full h-full flex-1 overflow-hidden select-none">
-      <svg
-        ref={svgRef}
-        className="absolute inset-0 w-full h-full cursor-crosshair"
+    <div
+      ref={containerRef}
+      className="relative w-full h-full flex-1 overflow-hidden select-none cursor-crosshair"
+      style={{
+        touchAction: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTouchCallout: 'none',
+      } as React.CSSProperties}
+      onMouseEnter={() => { if (!isTouchDevice) setCursorVisible(true); }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onDoubleClick={(e) => {
+        if ((e.target as Element).closest('[data-tree-node="true"]')) return;
+        centerOnSelf();
+      }}
+      onMouseLeave={(e) => {
+        handleMouseUp(e);
+        setCursorVisible(false);
+      }}
+      onWheel={handleWheel}
+    >
+      {/* Transform layer — CSS transform for pan/zoom (GPU-composited on all browsers) */}
+      <div
         style={{
-          touchAction: 'none',
-          WebkitUserSelect: 'none',
-          userSelect: 'none',
-          WebkitTouchCallout: 'none',
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transformOrigin: '0 0',
+          willChange: 'transform',
+          position: 'absolute',
+          top: 0,
+          left: 0,
         }}
-        onMouseEnter={() => { if (!isTouchDevice) setCursorVisible(true); }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onDoubleClick={(e) => {
-          if ((e.target as Element).closest('[data-tree-node="true"]')) return;
-          centerOnSelf();
-        }}
-        onMouseLeave={(e) => {
-          handleMouseUp(e);
-          setCursorVisible(false);
-        }}
-        onWheel={handleWheel}
       >
-        <LineGradientDefs />
-        <rect width="100%" height="100%" fill="transparent" />
-        <g
-          transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
-          style={{ willChange: 'transform' }}
+        {/* SVG layer — lines only, no foreignObject */}
+        <svg
+          style={{
+            position: 'absolute',
+            left: svgMinX,
+            top: svgMinY,
+            width: svgWidth,
+            height: svgHeight,
+            overflow: 'visible',
+            pointerEvents: 'none',
+          }}
+          viewBox={`${svgMinX} ${svgMinY} ${svgWidth} ${svgHeight}`}
         >
+          <LineGradientDefs />
           {lines}
-          {sortedNodes.map((n) => (
-            <PersonNode
-              key={n.key}
-              person={n.person}
-              x={n.x}
-              y={n.y}
-              generation={n.generation}
-              isSelf={n.person.id === selfPersonId}
-              selected={selectedNodeId === n.person.id}
-              isHovered={hoveredNodeId === n.person.id}
-              onHoverChange={(h) => setHoveredNodeId(h ? n.person.id : null)}
-              onNodeDoubleClick={() => centerNode(n)}
-              onLinkStart={handleLinkStart}
-            />
-          ))}
-          {/* Active Link Drag Line */}
           {linkDrag && (
             <path 
               d={`M ${linkDrag.startX} ${linkDrag.startY} Q ${linkDrag.startX} ${(linkDrag.startY + linkDrag.currentY)/2} ${linkDrag.currentX} ${linkDrag.currentY}`}
@@ -694,11 +625,28 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
               stroke="#378ADD"
               strokeWidth={3}
               strokeDasharray="6 6"
-              className="animate-dash"
+              className="tree-line-animate"
             />
           )}
-        </g>
-      </svg>
+        </svg>
+
+        {/* HTML nodes layer — regular divs, no foreignObject */}
+        {sortedNodes.map((n) => (
+          <PersonNode
+            key={n.key}
+            person={n.person}
+            x={n.x}
+            y={n.y}
+            generation={n.generation}
+            isSelf={n.person.id === selfPersonId}
+            selected={selectedNodeId === n.person.id}
+            isHovered={hoveredNodeId === n.person.id}
+            onHoverChange={(h) => setHoveredNodeId(h ? n.person.id : null)}
+            onNodeDoubleClick={() => centerNode(n)}
+            onLinkStart={handleLinkStart}
+          />
+        ))}
+      </div>
       
       {/* Link Type Modal */}
       {linkModal && (
@@ -798,7 +746,6 @@ export function TreeCanvas({ persons, relationships, selfPersonId, onAddRelation
             const viewY = (-pan.y / zoom - contentBounds.minY) * scale + mapPadding;
             const viewW = (viewport.width / zoom) * scale;
             const viewH = (viewport.height / zoom) * scale;
-
             return (
               <svg className="h-full w-full drop-shadow-md" viewBox={`0 0 ${mapWidth} ${mapHeight}`}>
                 {allNodes.map((node) => (
